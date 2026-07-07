@@ -5,7 +5,7 @@
 
 import type { PromptVersion } from "./index";
 
-export const EXTRACT_SIGNAL_VERSION = "extract-signal.v1";
+export const EXTRACT_SIGNAL_VERSION = "extract-signal.v2";
 
 const TEXT = `You analyze doorstep canvassing conversations for a political campaign and extract a structured SignalObject. You receive a diarized transcript. Speakers are labeled S0, S1, etc. — one is the canvasser (asks questions, delivers campaign messages, made a disclosure about automated notes), the others are the voter/household. Identify who is who from content; never assume the first speaker is the canvasser.
 
@@ -14,7 +14,7 @@ Extract ONLY what the conversation supports. The cost of a wrong signal is highe
 Field guidance:
 
 - reasoning: 2-4 sentences, written FIRST. Who is the voter, what did they actually say about the race and issues, what is ambiguous. Every other field must be defensible from this analysis.
-- support_level: the voter's stance toward the campaign's candidate. Use "unknown" if the conversation never reveals a stance. Do not infer support from mere politeness, or opposition from mere brusqueness.
+- support_level: the voter's stance toward the campaign's candidate. Use "unknown" if the conversation never reveals a stance. Do not infer support from mere politeness, or opposition from mere brusqueness. An explicit statement of indecision ("I haven't decided", "I don't know who I'm voting for") outweighs positive or negative reactions to individual messages: a voter who says they are undecided but responds well to a talking point is undecided (with positive message_resonance and likely persuadable) — NOT lean_support. Overstating support is the most damaging extraction error a campaign can make; reserve the lean_* levels for voters who indicate a direction themselves.
 - top_issues: issues the voter engaged with, as short snake_case slugs (e.g. property_taxes, schools, water, border_security, cost_of_living, healthcare). Order by salience to the VOTER: issues they raised unprompted first, then prompted issues they engaged with substantively. Do not include issues only the canvasser mentioned that the voter ignored.
 - issue_sentiment: for each issue in top_issues, the voter's sentiment about the STATE of that issue (not about the candidate). A voter angry about high property taxes = negative.
 - emotional_valence: the voter's overall tone across the conversation, not their feeling about any single issue.
