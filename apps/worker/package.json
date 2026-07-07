@@ -9,13 +9,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@canvara/db": "*",
+    "@canvara/prompts": "^0.1.0",
     "@canvara/shared": "*",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/node": "^24.7.2",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3",
-    "@types/node": "^24.7.2"
+    "typescript": "^5.9.3"
   }
 }
