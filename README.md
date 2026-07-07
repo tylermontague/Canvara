@@ -33,6 +33,8 @@ Requirements: `Canvara_Master_Requirements.docx` (in the Canvara Claude project)
 | `npm run gen:types` | Regenerate `packages/db/src/types.ts` from the live DB (needs `SUPABASE_DB_URL`) |
 | `npm run seed:m0` | Seed two test campaigns + one user each (idempotent) |
 | `npm run test:m0` | M0 exit test: prove cross-campaign RLS isolation |
+| `npm run test:m1` | M1 exit test: 5k-row voter file import + walk list build/assign |
+| `npm run test:m2` | M2 exit test: airplane-mode 5-door canvass syncs on reconnect |
 
 ## M0 exit test
 

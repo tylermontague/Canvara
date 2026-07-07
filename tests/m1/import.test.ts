@@ -72,7 +72,10 @@ before(async () => {
   if (!campaign) throw new Error("Campaign A not found — run `npm run seed:m0` first.");
   campaignA = campaign.id;
 
-  // Teardown previous M1 artifacts (idempotent re-runs).
+  // Teardown previous M1 artifacts (idempotent re-runs). Later milestones
+  // (M2's walk list, field-app captures) hold FKs to these voters, so clear
+  // every referencing row first — walk_list_items and conversations from any
+  // test — before deleting the voters themselves.
   const { data: oldLists } = await service
     .from("walk_lists")
     .select("id")
@@ -82,13 +85,35 @@ before(async () => {
     await service.from("walk_list_items").delete().eq("walk_list_id", l.id);
     await service.from("walk_lists").delete().eq("id", l.id);
   }
-  {
-    const { error } = await service
+  // Page until none remain — a single select is capped at 1,000 rows, and
+  // aborted runs can leave more than one import's worth behind.
+  for (;;) {
+    const { data: oldVoters, error: idErr } = await service
       .from("voters")
-      .delete()
+      .select("id")
       .eq("campaign_id", campaignA)
-      .like("external_id", `${M1_EXTERNAL_ID_PREFIX}%`);
-    if (error) throw new Error(`teardown voters: ${error.message}`);
+      .like("external_id", `${M1_EXTERNAL_ID_PREFIX}%`)
+      .limit(1000);
+    if (idErr) throw new Error(`teardown voter ids: ${idErr.message}`);
+    const ids = (oldVoters ?? []).map((v) => v.id);
+    if (ids.length === 0) break;
+    const CHUNK = 150; // keep the .in() querystring well under URL limits
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK);
+      // signals cascade from conversations
+      const { error: convErr } = await service
+        .from("conversations")
+        .delete()
+        .in("voter_id", chunk);
+      if (convErr) throw new Error(`teardown conversations: ${convErr.message}`);
+      const { error: itemErr } = await service
+        .from("walk_list_items")
+        .delete()
+        .in("voter_id", chunk);
+      if (itemErr) throw new Error(`teardown stray items: ${itemErr.message}`);
+      const { error: voterErr } = await service.from("voters").delete().in("id", chunk);
+      if (voterErr) throw new Error(`teardown voters: ${voterErr.message}`);
+    }
   }
 
   // Ensure a canvasser exists in campaign A to assign the walk list to.

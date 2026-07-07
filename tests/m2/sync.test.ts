@@ -65,8 +65,13 @@ const ports: SyncPorts = {
   async uploadAudio(path, bytes) {
     const { error } = await canvasser.storage
       .from("conversations")
-      .upload(path, bytes, { contentType: "audio/mp4", upsert: true });
-    if (error) throw new Error(`storage upload: ${error.message}`);
+      .upload(path, bytes, { contentType: "audio/mp4" });
+    // Same duplicate-tolerant contract as the app's uploader (see
+    // apps/field/src/lib/sync.ts): recordings are immutable, so
+    // "already exists" is success on retry.
+    if (error && !/already exists/i.test(error.message)) {
+      throw new Error(`storage upload: ${error.message}`);
+    }
   },
   async upsertConversation(capture, audioPath) {
     const { error } = await canvasser.from("conversations").upsert(
@@ -143,16 +148,15 @@ before(async () => {
   canvasserId = await ensureCanvasser(service, campaignA);
 
   // Teardown previous M2 runs: the canvasser is test-only, so all of their
-  // conversations (and the audio behind them) are ours to remove.
-  const { data: oldConvos } = await service
-    .from("conversations")
-    .select("id, audio_path")
-    .eq("canvasser_id", canvasserId);
-  for (const c of oldConvos ?? []) {
-    await service.from("signals").delete().eq("conversation_id", c.id);
-    if (c.audio_path) await service.storage.from("conversations").remove([c.audio_path]);
-  }
+  // conversations are ours to remove, and campaign A's storage folder is
+  // swept entirely (earlier teardowns may have orphaned audio objects).
   await service.from("conversations").delete().eq("canvasser_id", canvasserId);
+  const { data: oldObjects } = await service.storage.from("conversations").list(campaignA);
+  if (oldObjects && oldObjects.length > 0) {
+    await service.storage
+      .from("conversations")
+      .remove(oldObjects.map((o) => `${campaignA}/${o.name}`));
+  }
   const { data: oldLists } = await service
     .from("walk_lists")
     .select("id")

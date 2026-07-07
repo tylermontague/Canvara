@@ -47,7 +47,12 @@ export interface SyncPorts {
   isOnline(): Promise<boolean>;
   /** Read the local audio file for upload. */
   readAudio(uri: string): Promise<Uint8Array>;
-  /** Upload audio bytes to remote storage at the given path (must upsert). */
+  /**
+   * Upload audio bytes to remote storage at the given path. Must be
+   * idempotent: the path is keyed by the conversation UUID, so an
+   * "already exists" response means a prior attempt succeeded and must be
+   * treated as success (recordings are immutable — no overwrites).
+   */
   uploadAudio(path: string, bytes: Uint8Array): Promise<void>;
   /** Upsert the conversations row (onConflict: id). */
   upsertConversation(capture: QueuedCapture, audioPath: string | null): Promise<void>;

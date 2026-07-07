@@ -47,8 +47,12 @@ const ports: SyncPorts = {
   async uploadAudio(path, bytes) {
     const { error } = await supabase.storage
       .from("conversations")
-      .upload(path, bytes, { contentType: "audio/mp4", upsert: true });
-    if (error) throw new Error(`storage upload: ${error.message}`);
+      .upload(path, bytes, { contentType: "audio/mp4" });
+    // Path is keyed by conversation UUID: "already exists" means a prior
+    // attempt landed. Recordings are immutable (no storage UPDATE policy).
+    if (error && !/already exists/i.test(error.message)) {
+      throw new Error(`storage upload: ${error.message}`);
+    }
   },
   async upsertConversation(capture, audioPath) {
     const { error } = await supabase
