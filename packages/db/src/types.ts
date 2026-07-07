@@ -634,6 +634,18 @@ export type Database = {
         Args: Record<PropertyKey, never>;
         Returns: string;
       };
+      correlate_voter: {
+        Args: {
+          p_campaign_id: string;
+          p_lat: number;
+          p_lng: number;
+          p_max_meters?: number;
+        };
+        Returns: {
+          voter_id: string;
+          distance_m: number;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
