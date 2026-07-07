@@ -13,7 +13,7 @@ import {
   supabaseEnv,
   type DbClient,
 } from "@canvara/db";
-import { CAMPAIGN_A, CAMPAIGN_B, USER_A, USER_B } from "./fixtures.js";
+import { CAMPAIGN_A, CAMPAIGN_B, USER_A, USER_B } from "./fixtures";
 
 const TABLES = ["voters", "conversations", "signals"] as const;
 type TenantTable = (typeof TABLES)[number];

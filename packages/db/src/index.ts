@@ -7,9 +7,9 @@
 //    set campaign_id explicitly and never join across tenants.
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "./types.js";
+import type { Database } from "./types";
 
-export type { Database, Json, Tables, TablesInsert, TablesUpdate } from "./types.js";
+export type { Database, Json, Tables, TablesInsert, TablesUpdate } from "./types";
 
 export type DbClient = SupabaseClient<Database>;
 

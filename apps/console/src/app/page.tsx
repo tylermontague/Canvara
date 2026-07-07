@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Role } from "@canvara/shared";
@@ -11,13 +12,13 @@ const ROLE_LABELS: Record<Role, string> = {
   canvasser: "Canvasser",
 };
 
-// Console navigation v1 (MODULE_MAP.md) — rooms land in later milestones.
-const MODULES = [
-  "Field Office",
-  "Voter Intelligence Lab",
-  "Message Lab",
-  "Voter Contact Workshop",
-  "Admin",
+// Console navigation v1 (MODULE_MAP.md) — remaining rooms land in later milestones.
+const MODULES: { label: string; href?: string }[] = [
+  { label: "Field Office", href: "/voters" },
+  { label: "Voter Intelligence Lab" },
+  { label: "Message Lab" },
+  { label: "Voter Contact Workshop" },
+  { label: "Admin" },
 ];
 
 export default async function Home() {
@@ -60,15 +61,21 @@ export default async function Home() {
         <div className="flex items-baseline gap-6">
           <span className="text-lg font-semibold">Canvara</span>
           <nav className="hidden gap-4 text-sm text-zinc-400 md:flex">
-            {MODULES.map((m) => (
-              <span
-                key={m}
-                className="cursor-not-allowed"
-                title="Coming in a later milestone"
-              >
-                {m}
-              </span>
-            ))}
+            {MODULES.map((m) =>
+              m.href ? (
+                <Link key={m.label} href={m.href} className="text-zinc-200 hover:text-white">
+                  {m.label}
+                </Link>
+              ) : (
+                <span
+                  key={m.label}
+                  className="cursor-not-allowed"
+                  title="Coming in a later milestone"
+                >
+                  {m.label}
+                </span>
+              ),
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-4">

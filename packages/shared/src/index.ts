@@ -18,4 +18,4 @@ export function isRole(value: unknown): value is Role {
 export const CONSENT_MODES = ["one_party", "two_party"] as const;
 export type ConsentMode = (typeof CONSENT_MODES)[number];
 
-export * from "./voter-import.js";
+export * from "./voter-import";

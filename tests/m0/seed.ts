@@ -7,7 +7,7 @@
 
 import "dotenv/config";
 import { createServiceClient, supabaseEnv, type DbClient } from "@canvara/db";
-import { CAMPAIGN_A, CAMPAIGN_B, USER_A, USER_B } from "./fixtures.js";
+import { CAMPAIGN_A, CAMPAIGN_B, USER_A, USER_B } from "./fixtures";
 
 const { url, serviceRoleKey } = supabaseEnv();
 if (!serviceRoleKey) {
