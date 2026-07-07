@@ -1,64 +1,94 @@
-import Image from "next/image";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import type { Role } from "@canvara/shared";
+import { SignOutButton } from "./sign-out-button";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+const ROLE_LABELS: Record<Role, string> = {
+  admin: "Admin",
+  manager: "Campaign Manager",
+  field_director: "Field Director",
+  organizer: "Organizer",
+  canvasser: "Canvasser",
+};
+
+// Console navigation v1 (MODULE_MAP.md) — rooms land in later milestones.
+const MODULES = [
+  "Field Office",
+  "Voter Intelligence Lab",
+  "Message Lab",
+  "Voter Contact Workshop",
+  "Admin",
+];
+
+export default async function Home() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  // RLS scopes both queries to the signed-in user's campaign.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, full_name, campaign_id, campaigns(name, state)")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-zinc-950 p-6">
+        <div className="max-w-md text-center">
+          <h1 className="mb-2 text-xl font-semibold text-zinc-50">
+            No campaign profile
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mb-6 text-sm text-zinc-400">
+            Your account ({user.email}) is not assigned to a campaign. Ask a
+            campaign admin to create your profile.
           </p>
+          <SignOutButton />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </main>
+    );
+  }
+
+  const roleLabel = ROLE_LABELS[profile.role as Role] ?? profile.role;
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <header className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
+        <div className="flex items-baseline gap-6">
+          <span className="text-lg font-semibold">Canvara</span>
+          <nav className="hidden gap-4 text-sm text-zinc-400 md:flex">
+            {MODULES.map((m) => (
+              <span
+                key={m}
+                className="cursor-not-allowed"
+                title="Coming in a later milestone"
+              >
+                {m}
+              </span>
+            ))}
+          </nav>
         </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right text-sm">
+            <div>{profile.full_name ?? user.email}</div>
+            <div className="text-zinc-400">
+              {roleLabel} · {profile.campaigns?.name}
+            </div>
+          </div>
+          <SignOutButton />
+        </div>
+      </header>
+      <main className="p-6">
+        <h1 className="mb-2 text-2xl font-semibold">
+          {profile.campaigns?.name}
+        </h1>
+        <p className="text-sm text-zinc-400">
+          {profile.campaigns?.state} · Signed in as {user.email} ({roleLabel}).
+          M0 foundation — modules come online in M1+.
+        </p>
       </main>
     </div>
   );
