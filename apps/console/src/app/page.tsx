@@ -22,7 +22,8 @@ const MODULES: { label: string; href?: string; description: string }[] = [
   },
   {
     label: "Voter Intelligence Lab",
-    description: "Coming in a later milestone.",
+    href: "/lab",
+    description: "Ambient Pulse, issue salience, and the review queue.",
   },
   { label: "Message Lab", description: "Coming in a later milestone." },
   {

@@ -15,7 +15,7 @@ const ROLE_LABELS: Record<Role, string> = {
 // Console navigation v1 (MODULE_MAP.md) — remaining rooms land in later milestones.
 const MODULES: { label: string; href?: string }[] = [
   { label: "Field Office", href: "/voters" },
-  { label: "Voter Intelligence Lab", href: "/review" },
+  { label: "Voter Intelligence Lab", href: "/lab" },
   { label: "Message Lab" },
   { label: "Voter Contact Workshop" },
   { label: "Admin" },

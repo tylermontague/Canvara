@@ -130,7 +130,14 @@ export default async function VotersPage({
               <tbody>
                 {(voters ?? []).map((v) => (
                   <tr key={v.id} className="border-t border-rule transition-colors duration-200 ease-out hover:bg-stone">
-                    <td className="px-3 py-1.5">{v.last_name}</td>
+                    <td className="px-3 py-1.5">
+                      <Link
+                        href={`/voters/${v.id}`}
+                        className="text-navy underline-offset-2 hover:underline"
+                      >
+                        {v.last_name}
+                      </Link>
+                    </td>
                     <td className="px-3 py-1.5">{v.first_name}</td>
                     <td className="px-3 py-1.5">{v.address}</td>
                     <td className="px-3 py-1.5">{v.city}</td>

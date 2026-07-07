@@ -627,6 +627,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      pulse_support_distribution: {
+        Row: {
+          campaign_id: string;
+          support_level: string;
+          n: number;
+        };
+        Relationships: [];
+      };
+      pulse_issue_salience: {
+        Row: {
+          campaign_id: string;
+          issue: string;
+          mentions: number;
+          spontaneous: number;
+          negative: number;
+          positive: number;
+          neutral_mixed: number;
+        };
+        Relationships: [];
+      };
+      pulse_daily_trend: {
+        Row: {
+          campaign_id: string;
+          day: string;
+          support_level: string;
+          n: number;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       current_campaign_id: {

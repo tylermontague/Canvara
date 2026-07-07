@@ -24,3 +24,4 @@ export * from "./offline";
 export * from "./signal";
 export * from "./wer";
 export * from "./debrief";
+export * from "./pulse";
