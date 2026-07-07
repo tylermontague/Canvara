@@ -30,16 +30,12 @@ import {
   type ColumnMapping,
 } from "@canvara/shared";
 import { CAMPAIGN_A, USER_A, USER_B } from "../m0/fixtures";
+import { ensureCanvasser } from "../helpers";
 import { generateVoterFileCsv, M1_EXTERNAL_ID_PREFIX } from "./gen-voter-file";
 
 const ROW_COUNT = 5000;
 const BATCH_SIZE = 500;
 const WALK_LIST_NAME = "M1 Test Walk List — Mesa 85203";
-const CANVASSER = {
-  email: "m1-canvasser-a@canvara-test.dev",
-  password: "m1-test-canvasser-8k4p",
-  fullName: "M1 Canvasser A",
-};
 
 const { url, anonKey, serviceRoleKey } = supabaseEnv();
 if (!serviceRoleKey) {
@@ -96,36 +92,7 @@ before(async () => {
   }
 
   // Ensure a canvasser exists in campaign A to assign the walk list to.
-  const { data: userList, error: listErr } = await service.auth.admin.listUsers({
-    page: 1,
-    perPage: 1000,
-  });
-  if (listErr) throw new Error(listErr.message);
-  let canvasserUserId = userList.users.find((u) => u.email === CANVASSER.email)?.id;
-  if (!canvasserUserId) {
-    const { data: created, error: createErr } = await service.auth.admin.createUser({
-      email: CANVASSER.email,
-      password: CANVASSER.password,
-      email_confirm: true,
-    });
-    if (createErr) throw new Error(createErr.message);
-    canvasserUserId = created.user.id;
-  }
-  const { data: profile } = await service
-    .from("profiles")
-    .select("id")
-    .eq("id", canvasserUserId)
-    .maybeSingle();
-  if (!profile) {
-    const { error: profErr } = await service.from("profiles").insert({
-      id: canvasserUserId,
-      campaign_id: campaignA,
-      role: "canvasser",
-      full_name: CANVASSER.fullName,
-    });
-    if (profErr) throw new Error(profErr.message);
-  }
-  canvasserProfileId = canvasserUserId;
+  canvasserProfileId = await ensureCanvasser(service, campaignA);
 
   // Generate the 5k-row file on disk and read it back, like a real upload.
   const dir = mkdtempSync(path.join(tmpdir(), "canvara-m1-"));
