@@ -28,7 +28,21 @@ interface LoadedSignal {
   emotional_valence: string | null;
   top_issues: string[];
   voterName: string;
+  voterId: string | null;
 }
+
+// Attributes a canvasser can sharpen at the door (M6.5). Door observation
+// trumps the voter file in cohort evaluation.
+const OBSERVABLE_ATTRIBUTES: { key: string; label: string; options: string[] }[] = [
+  { key: "religiosity", label: "Religiosity", options: ["religious", "secular"] },
+  {
+    key: "race",
+    label: "Race / ethnicity",
+    options: ["white", "black", "hispanic", "asian", "native", "other"],
+  },
+  { key: "language", label: "Preferred language", options: ["english", "spanish", "other"] },
+  { key: "education", label: "Education", options: ["no_college", "college", "postgrad"] },
+];
 
 export default function DebriefScreen() {
   const { signalId } = useLocalSearchParams<{ signalId: string }>();
@@ -42,12 +56,13 @@ export default function DebriefScreen() {
   const [persuadability, setPersuadability] = useState<string | null>(null);
   const [valence, setValence] = useState<string | null>(null);
   const [issues, setIssues] = useState<string[]>([]);
+  const [observed, setObserved] = useState<Record<string, string>>({});
 
   useEffect(() => {
     void supabase
       .from("signals")
       .select(
-        "id, conversation_id, campaign_id, debrief_summary, support_level, persuadability, emotional_valence, top_issues, conversations!inner(voters(first_name, last_name))",
+        "id, conversation_id, campaign_id, debrief_summary, support_level, persuadability, emotional_valence, top_issues, conversations!inner(voter_id, voters(first_name, last_name))",
       )
       .eq("id", signalId)
       .single()
@@ -69,6 +84,7 @@ export default function DebriefScreen() {
           voterName: voter
             ? `${voter.first_name ?? ""} ${voter.last_name ?? ""}`.trim()
             : "Unmatched door",
+          voterId: data.conversations.voter_id,
         };
         setSignal(loaded);
         setSupport(loaded.support_level);
@@ -103,6 +119,24 @@ export default function DebriefScreen() {
         actorId: profile.id,
         corrections,
       });
+      // Door-observed attributes (M6.5): what the canvasser learned in
+      // person overrides the voter file downstream.
+      const attributeRows = Object.entries(observed);
+      if (signal.voterId && attributeRows.length > 0) {
+        const { error: attrErr } = await supabase.from("voter_attributes").upsert(
+          attributeRows.map(([key, value]) => ({
+            campaign_id: signal.campaign_id,
+            voter_id: signal.voterId!,
+            key,
+            value,
+            source: "canvasser",
+            noted_by: profile.id,
+            conversation_id: signal.conversation_id,
+          })),
+          { onConflict: "voter_id,key" },
+        );
+        if (attrErr) throw new Error(attrErr.message);
+      }
       router.back();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed — are you online?");
@@ -160,6 +194,41 @@ export default function DebriefScreen() {
           ))}
           {issues.length === 0 && <Text style={styles.dim}>No issues recorded.</Text>}
         </View>
+      </View>
+
+      <View>
+        <Text style={styles.groupLabel}>
+          WHAT DID YOU LEARN ABOUT THEM? — optional, trumps the voter file
+        </Text>
+        {OBSERVABLE_ATTRIBUTES.map((attr) => (
+          <View key={attr.key} style={{ marginBottom: 10 }}>
+            <Text style={styles.attrLabel}>{attr.label}</Text>
+            <View style={styles.chipRow}>
+              {attr.options.map((option) => {
+                const active = observed[attr.key] === option;
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    style={[styles.chip, active && styles.chipOn]}
+                    onPress={() =>
+                      setObserved((prev) =>
+                        active
+                          ? Object.fromEntries(
+                              Object.entries(prev).filter(([k]) => k !== attr.key),
+                            )
+                          : { ...prev, [attr.key]: option },
+                      )
+                    }
+                  >
+                    <Text style={active ? styles.chipOnText : styles.chipText}>
+                      {option.replace(/_/g, " ")}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        ))}
       </View>
 
       {error && <Text style={styles.error}>{error}</Text>}
@@ -231,6 +300,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     marginBottom: 8,
   },
+  attrLabel: { color: colors.dim, fontSize: 13, marginBottom: 6 },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
     backgroundColor: colors.card,

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:m65": "node --import tsx --test tests/m65/persuasion.test.ts"
   },
   "dependencies": {
     "@canvara/db": "^0.1.0",

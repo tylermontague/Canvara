@@ -30,6 +30,12 @@ db.execSync(`
     voter TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS stops_list_idx ON stops_cache(walk_list_id, position);
+  CREATE TABLE IF NOT EXISTS survey_cache (
+    id TEXT PRIMARY KEY,
+    question TEXT NOT NULL,
+    options TEXT NOT NULL,
+    position INTEGER NOT NULL
+  );
 `);
 
 // ---------- Capture queue (QueueStore implementation) ----------
@@ -94,6 +100,10 @@ export interface CachedVoter {
   vote_history: Record<string, boolean> | null;
   /** Tier-2 briefing (FA-3): belief-engine top issues, synced with the list. */
   beliefs?: { issue: string; mean: number; strength: number }[];
+  /** Connection notes: durable personal facts from prior conversations. */
+  connection?: string[];
+  /** Door-observed attributes (canvasser/extracted). */
+  attributes?: { key: string; value: string }[];
 }
 
 export interface CachedStop {
@@ -169,4 +179,34 @@ export function getCachedStop(itemId: string): CachedStop | null {
 /** Local, offline-safe status update so the UI reflects progress instantly. */
 export function setCachedStopStatus(itemId: string, status: string): void {
   db.runSync("UPDATE stops_cache SET status = ? WHERE item_id = ?", [status, itemId]);
+}
+
+// ---------- Door-poll question cache (M6.5) ----------
+
+export interface CachedSurveyQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  position: number;
+}
+
+export function replaceSurveyCache(questions: CachedSurveyQuestion[]): void {
+  db.withTransactionSync(() => {
+    db.runSync("DELETE FROM survey_cache");
+    for (const q of questions) {
+      db.runSync("INSERT INTO survey_cache (id, question, options, position) VALUES (?, ?, ?, ?)", [
+        q.id,
+        q.question,
+        JSON.stringify(q.options),
+        q.position,
+      ]);
+    }
+  });
+}
+
+export function getCachedSurveyQuestions(): CachedSurveyQuestion[] {
+  const rows = db.getAllSync<{ id: string; question: string; options: string; position: number }>(
+    "SELECT * FROM survey_cache ORDER BY position",
+  );
+  return rows.map((r) => ({ ...r, options: JSON.parse(r.options) as string[] }));
 }

@@ -32,6 +32,10 @@ export const VOTER_FIELDS = [
   { key: "party", label: "Party", multi: false },
   { key: "birth_year", label: "Birth year", multi: false },
   { key: "gender", label: "Gender", multi: false },
+  { key: "race", label: "Race / ethnicity", multi: false },
+  { key: "income_bracket", label: "Income", multi: false },
+  { key: "education", label: "Education", multi: false },
+  { key: "religion", label: "Religion", multi: false },
 ] as const;
 
 export type VoterFieldKey = (typeof VOTER_FIELDS)[number]["key"];
@@ -54,6 +58,10 @@ export interface MappedVoter {
   party: string | null;
   birth_year: number | null;
   gender: string | null;
+  race: string | null;
+  income_bracket: string | null;
+  education: string | null;
+  religion: string | null;
 }
 
 // ---------- Header-row detection ----------
@@ -148,6 +156,10 @@ const FIELD_SYNONYMS: Record<Exclude<VoterFieldKey, "address">, string[]> = {
   party: ["party"],
   birth_year: ["birth year", "year of birth", "yob", "birthdate", "date of birth", "dob", "birth"],
   gender: ["gender", "sex"],
+  race: ["race ethnicity", "ethnicity", "race"],
+  income_bracket: ["household income", "income bracket", "income"],
+  education: ["education level", "education", "edu"],
+  religion: ["religious affiliation", "religion", "faith"],
 };
 
 // Street-address parts, in the order they should be joined.
@@ -247,6 +259,10 @@ export function mapRows(
       party: pick(row, "party"),
       birth_year: rawYear ? parseBirthYear(rawYear) : null,
       gender: pick(row, "gender"),
+      race: pick(row, "race"),
+      income_bracket: pick(row, "income_bracket"),
+      education: pick(row, "education"),
+      religion: pick(row, "religion"),
     };
 
     const hasIdentity = voter.first_name || voter.last_name || voter.address || voter.external_id;

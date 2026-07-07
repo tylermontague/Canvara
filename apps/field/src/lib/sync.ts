@@ -13,7 +13,12 @@ import {
 } from "@canvara/shared";
 import type { TablesInsert } from "@canvara/db";
 import { supabase } from "./supabase";
-import { sqliteQueueStore, replaceWalkListCache, type CachedStop } from "./local-db";
+import {
+  sqliteQueueStore,
+  replaceWalkListCache,
+  replaceSurveyCache,
+  type CachedStop,
+} from "./local-db";
 import type { Profile } from "./session";
 
 function captureToRow(capture: QueuedCapture, audioPath: string | null): TablesInsert<"conversations"> {
@@ -68,6 +73,19 @@ const ports: SyncPorts = {
       .eq("id", walkListItemId);
     if (error) throw new Error(`stop status: ${error.message}`);
   },
+  async saveSurveyResponses(capture) {
+    const rows = (capture.surveyResponses ?? []).map((r) => ({
+      campaign_id: capture.campaignId,
+      question_id: r.questionId,
+      conversation_id: capture.id,
+      voter_id: capture.voterId,
+      answer: r.answer,
+    }));
+    const { error } = await supabase
+      .from("survey_responses")
+      .upsert(rows, { onConflict: "question_id,conversation_id" });
+    if (error) throw new Error(`survey responses: ${error.message}`);
+  },
   async deleteLocalAudio(uri) {
     new File(uri).delete();
   },
@@ -121,14 +139,45 @@ export async function syncDown(profile: Profile): Promise<{ lists: number; stops
       .order("position");
     if (itemsErr) throw new Error(itemsErr.message);
 
-    // Tier-2 briefing (FA-3): belief-engine predictions, cached with the
-    // list so the door screen stays instant and offline-safe.
+    // Tier-2 briefing (FA-3): belief-engine predictions, connection notes,
+    // and door-observed attributes, cached with the list so the door screen
+    // stays instant and offline-safe.
     const voterIds = [...new Set((items ?? []).map((i) => i.voter_id).filter((v): v is string => v !== null))];
     let beliefs = new Map<string, { issue: string; mean: number; strength: number }[]>();
+    const connection = new Map<string, string[]>();
+    const attributes = new Map<string, { key: string; value: string }[]>();
     try {
       beliefs = await fetchVoterBeliefs(supabase, voterIds);
+      if (voterIds.length > 0) {
+        const [{ data: contextRows }, { data: attrRows }] = await Promise.all([
+          supabase
+            .from("signals")
+            .select("personal_context, conversations!inner(voter_id, recorded_at)")
+            .in("conversations.voter_id", voterIds)
+            .order("created_at", { ascending: false })
+            .limit(400),
+          supabase
+            .from("voter_attributes")
+            .select("voter_id, key, value")
+            .in("voter_id", voterIds),
+        ]);
+        for (const row of contextRows ?? []) {
+          const vid = row.conversations.voter_id;
+          if (!vid) continue;
+          const list = connection.get(vid) ?? [];
+          for (const fact of row.personal_context ?? []) {
+            if (list.length < 6 && !list.includes(fact)) list.push(fact);
+          }
+          connection.set(vid, list);
+        }
+        for (const row of attrRows ?? []) {
+          const list = attributes.get(row.voter_id) ?? [];
+          list.push({ key: row.key, value: row.value });
+          attributes.set(row.voter_id, list);
+        }
+      }
     } catch {
-      // Beliefs are an enhancement — sync-down must not fail on them.
+      // Enhancements — sync-down must not fail on them.
     }
 
     stops = (items ?? []).map((i) => ({
@@ -153,10 +202,25 @@ export async function syncDown(profile: Profile): Promise<{ lists: number; stops
               .filter((b) => b.strength >= 1)
               .slice(0, 3)
           : [],
+        connection: i.voter_id ? (connection.get(i.voter_id) ?? []) : [],
+        attributes: i.voter_id ? (attributes.get(i.voter_id) ?? []) : [],
       },
     }));
   }
 
   replaceWalkListCache(lists ?? [], stops);
+
+  // Door-poll questions (M6.5) — cached so polls work offline at the door.
+  try {
+    const { data: questions } = await supabase
+      .from("survey_questions")
+      .select("id, question, options, position")
+      .eq("active", true)
+      .order("position");
+    replaceSurveyCache(questions ?? []);
+  } catch {
+    // keep the previous cache on failure
+  }
+
   return { lists: listIds.length, stops: stops.length };
 }

@@ -169,7 +169,7 @@ test("scripted conversation: correct signals on all 11 fields, within 10 minutes
 
   assert.ok(s.confidence_score >= 0.6, `confidence ${s.confidence_score} ≥ 0.6 (no review needed)`);
   assert.ok(s.model_used.length > 0, "model recorded");
-  assert.equal(s.prompt_version, "extract-signal.v2", "prompt version recorded");
+  assert.equal(s.prompt_version, "extract-signal.v3", "prompt version recorded");
 });
 
 test("garbled transcript: escalates to Sonnet and routes to review queue", async () => {

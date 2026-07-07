@@ -75,6 +75,13 @@ export const SignalObjectSchema = z.object({
   ),
   /** 11 — Extraction confidence 0..1 (drives the Sonnet escalation at <0.6). */
   confidence: z.number().min(0).max(1),
+  /**
+   * 12 (M6.5) — Durable personal-connection facts the voter volunteered,
+   * for tailored messaging later ("served a mission in Chile", "grandkids
+   * at Fremont Elementary", "spouse follows politics"). Survives retention
+   * purges of the raw transcript, so it must stand alone.
+   */
+  personal_context: z.array(z.string()),
 });
 
 export type SignalObject = z.infer<typeof SignalObjectSchema>;

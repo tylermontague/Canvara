@@ -96,5 +96,6 @@ export function signalToRow(signal: SignalObject) {
     follow_up_signals: signal.follow_up_signals,
     provenance: Object.fromEntries(signal.provenance.map((p) => [p.issue, p.source])),
     confidence_score: signal.confidence,
+    personal_context: signal.personal_context,
   };
 }

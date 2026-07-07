@@ -88,6 +88,10 @@ export type Database = {
           zip: string | null;
           precinct: string | null;
           party: string | null;
+          race: string | null;
+          income_bracket: string | null;
+          education: string | null;
+          religion: string | null;
           birth_year: number | null;
           gender: string | null;
           vote_history: Json | null;
@@ -105,6 +109,10 @@ export type Database = {
           zip?: string | null;
           precinct?: string | null;
           party?: string | null;
+          race?: string | null;
+          income_bracket?: string | null;
+          education?: string | null;
+          religion?: string | null;
           birth_year?: number | null;
           gender?: string | null;
           vote_history?: Json | null;
@@ -122,6 +130,10 @@ export type Database = {
           zip?: string | null;
           precinct?: string | null;
           party?: string | null;
+          race?: string | null;
+          income_bracket?: string | null;
+          education?: string | null;
+          religion?: string | null;
           birth_year?: number | null;
           gender?: string | null;
           vote_history?: Json | null;
@@ -396,6 +408,7 @@ export type Database = {
           prompt_version: string;
           canvasser_confirmed: boolean | null;
           debrief_summary: string | null;
+          personal_context: string[] | null;
           corrections: Json | null;
           created_at: string;
         };
@@ -417,6 +430,7 @@ export type Database = {
           prompt_version: string;
           canvasser_confirmed?: boolean | null;
           debrief_summary?: string | null;
+          personal_context?: string[] | null;
           corrections?: Json | null;
           created_at?: string;
         };
@@ -438,6 +452,7 @@ export type Database = {
           prompt_version?: string;
           canvasser_confirmed?: boolean | null;
           debrief_summary?: string | null;
+          personal_context?: string[] | null;
           corrections?: Json | null;
           created_at?: string;
         };
@@ -615,6 +630,170 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      voter_attributes: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          voter_id: string;
+          key: string;
+          value: string;
+          source: string;
+          noted_by: string | null;
+          conversation_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          voter_id: string;
+          key: string;
+          value: string;
+          source: string;
+          noted_by?: string | null;
+          conversation_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          voter_id?: string;
+          key?: string;
+          value?: string;
+          source?: string;
+          noted_by?: string | null;
+          conversation_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      survey_questions: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          question: string;
+          options: string[];
+          active: boolean;
+          position: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          question: string;
+          options: string[];
+          active?: boolean;
+          position?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          question?: string;
+          options?: string[];
+          active?: boolean;
+          position?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      survey_responses: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          question_id: string;
+          conversation_id: string;
+          voter_id: string | null;
+          answer: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          question_id: string;
+          conversation_id: string;
+          voter_id?: string | null;
+          answer: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          question_id?: string;
+          conversation_id?: string;
+          voter_id?: string | null;
+          answer?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "survey_responses_question_id_fkey";
+            columns: ["question_id"];
+            isOneToOne: false;
+            referencedRelation: "survey_questions";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      cohorts: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          name: string;
+          definition: Json;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          name: string;
+          definition: Json;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          name?: string;
+          definition?: Json;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      cohort_issue_priors: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          cohort_id: string;
+          issue_id: string;
+          stance: Json;
+          source: string;
+          as_of: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          cohort_id: string;
+          issue_id: string;
+          stance: Json;
+          source: string;
+          as_of: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          cohort_id?: string;
+          issue_id?: string;
+          stance?: Json;
+          source?: string;
+          as_of?: string;
+          created_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: {

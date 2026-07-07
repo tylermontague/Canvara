@@ -61,12 +61,20 @@ export default async function LabPage() {
               {distribution.total === 1 ? "" : "s"} are saying.
             </p>
           </div>
-          <Link
-            href="/review"
-            className="rounded-lg border border-rule bg-white px-4 py-2 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone"
-          >
-            Review queue{reviewCount > 0 ? ` (${reviewCount})` : ""}
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/lab/cohorts"
+              className="rounded-lg border border-rule bg-white px-4 py-2 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone"
+            >
+              Cohort blocks
+            </Link>
+            <Link
+              href="/review"
+              className="rounded-lg border border-rule bg-white px-4 py-2 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone"
+            >
+              Review queue{reviewCount > 0 ? ` (${reviewCount})` : ""}
+            </Link>
+          </div>
         </div>
 
         {/* Support distribution */}

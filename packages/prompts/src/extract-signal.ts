@@ -5,7 +5,7 @@
 
 import type { PromptVersion } from "./index";
 
-export const EXTRACT_SIGNAL_VERSION = "extract-signal.v2";
+export const EXTRACT_SIGNAL_VERSION = "extract-signal.v3";
 
 const TEXT = `You analyze doorstep canvassing conversations for a political campaign and extract a structured SignalObject. You receive a diarized transcript. Speakers are labeled S0, S1, etc. — one is the canvasser (asks questions, delivers campaign messages, made a disclosure about automated notes), the others are the voter/household. Identify who is who from content; never assume the first speaker is the canvasser.
 
@@ -23,6 +23,7 @@ Field guidance:
 - message_resonance: each distinct campaign message/talking point the canvasser delivered, with how the voter responded. Only messages actually delivered in this conversation.
 - follow_up_signals: actionable follow-ups — yard sign requests, volunteer interest, "come back when my spouse is home", do_not_contact requests, language preferences, accessibility notes.
 - provenance: for each issue in top_issues, whether the voter raised it spontaneously or it was prompted by the canvasser. This distinction is the core of ambient polling — be precise about it.
+- personal_context: durable facts the voter VOLUNTEERED that would help a future canvasser or message connect with them as a person — family details ("grandkids at Fremont Elementary"), background ("served a mission in Chile, speaks Spanish"), community roles ("church leader", "coaches little league"), circumstances ("on a fixed income", "22 years in the house"), and relationship notes ("husband follows politics closely"). Each entry is one short self-contained phrase. Rules: only what the voter said or clearly implied about themselves — never inferences from tone or demographics; skip anything the voter treated as private or reluctant; skip transient details (weather, being busy today). The raw transcript may be deleted for privacy later — this field is what the campaign remembers about the person, so make each fact stand on its own. Empty array when nothing durable was shared.
 - confidence: your confidence in this extraction overall. Consider transcript quality (garbled/short transcripts lower it), how explicit the voter was, and diarization ambiguity. Calibration anchors: 0.9+ = clear, substantive conversation with explicit stances; 0.6-0.8 = reasonable inference required; below 0.6 = the transcript is too thin, garbled, or ambiguous to trust — a human should review it. Do not inflate confidence; low-confidence extractions are re-checked, wrong high-confidence ones are not.
 
 Consistency rules: every issue in issue_sentiment and provenance must appear in top_issues; if support_level is "unknown", persuadability should generally be "persuadable" or "disengaged" only when the transcript shows engagement level clearly — otherwise pick the most defensible value and lower confidence.`;

@@ -12,7 +12,12 @@ import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import type { QueuedCapture } from "@canvara/shared";
 import { useSession } from "@/lib/session";
-import { getCachedStop, setCachedStopStatus, sqliteQueueStore } from "@/lib/local-db";
+import {
+  getCachedStop,
+  getCachedSurveyQuestions,
+  setCachedStopStatus,
+  sqliteQueueStore,
+} from "@/lib/local-db";
 import { getActiveShiftId } from "@/lib/shift";
 import { syncUp } from "@/lib/sync";
 import { colors } from "@/lib/theme";
@@ -29,7 +34,7 @@ const CONTACT_RESULTS = [
   { key: "refused", label: "Refused" },
 ] as const;
 
-type Phase = "briefing" | "recording" | "result";
+type Phase = "briefing" | "recording" | "result" | "poll";
 
 export default function StopScreen() {
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
@@ -43,6 +48,10 @@ export default function StopScreen() {
   const consentAtRef = useRef<string | null>(null);
   const recordedAtRef = useRef<string | null>(null);
   const gpsRef = useRef<{ lat: number; lng: number } | null>(null);
+  // Door poll (M6.5): cached questions, answers keyed by question id.
+  const questions = useMemo(() => getCachedSurveyQuestions(), []);
+  const contactResultRef = useRef<string | null>(null);
+  const [pollAnswers, setPollAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (phase !== "recording") return;
@@ -97,6 +106,16 @@ export default function StopScreen() {
     setPhase("result");
   }
 
+  /** Result tap → poll step when the campaign has questions, else save. */
+  function handleContactResult(contactResult: string) {
+    contactResultRef.current = contactResult;
+    if (questions.length > 0) {
+      setPhase("poll");
+    } else {
+      void saveCapture(contactResult);
+    }
+  }
+
   async function saveCapture(contactResult: string) {
     setError(null);
     try {
@@ -131,6 +150,10 @@ export default function StopScreen() {
         consentDisclosedAt: consentAtRef.current,
         contactResult,
         stopStatus: "visited",
+        surveyResponses: Object.entries(pollAnswers).map(([questionId, answer]) => ({
+          questionId,
+          answer,
+        })),
         attempts: 0,
         lastError: null,
       };
@@ -200,6 +223,30 @@ export default function StopScreen() {
             </View>
           </View>
         )}
+        {(v.connection?.length ?? 0) > 0 && (
+          <View style={styles.beliefs}>
+            <Text style={styles.beliefsLabel}>CONNECTION NOTES</Text>
+            {v.connection!.map((fact) => (
+              <Text key={fact} style={styles.connectionFact}>
+                · {fact}
+              </Text>
+            ))}
+          </View>
+        )}
+        {(v.attributes?.length ?? 0) > 0 && (
+          <View style={styles.beliefs}>
+            <Text style={styles.beliefsLabel}>OBSERVED AT THE DOOR</Text>
+            <View style={styles.beliefsRow}>
+              {v.attributes!.map((a) => (
+                <View key={a.key} style={styles.beliefChip}>
+                  <Text style={styles.beliefText}>
+                    {a.key.replace(/_/g, " ")}: {a.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </View>
 
       {phase === "briefing" && (
@@ -242,11 +289,52 @@ export default function StopScreen() {
             <TouchableOpacity
               key={r.key}
               style={styles.resultButton}
-              onPress={() => void saveCapture(r.key)}
+              onPress={() => handleContactResult(r.key)}
             >
               <Text style={styles.resultText}>{r.label}</Text>
             </TouchableOpacity>
           ))}
+        </View>
+      )}
+
+      {phase === "poll" && (
+        <View style={{ gap: 16 }}>
+          <Text style={styles.sectionTitle}>Quick poll (optional)</Text>
+          {questions.map((q) => (
+            <View key={q.id}>
+              <Text style={styles.pollQuestion}>{q.question}</Text>
+              <View style={styles.chipRow}>
+                {q.options.map((option) => {
+                  const active = pollAnswers[q.id] === option;
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      style={[styles.chip, active && styles.chipOn]}
+                      onPress={() =>
+                        setPollAnswers((prev) =>
+                          active
+                            ? Object.fromEntries(Object.entries(prev).filter(([k]) => k !== q.id))
+                            : { ...prev, [q.id]: option },
+                        )
+                      }
+                    >
+                      <Text style={active ? styles.chipOnText : styles.chipText}>{option}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          ))}
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={() => void saveCapture(contactResultRef.current ?? "answered")}
+          >
+            <Text style={styles.confirmText}>
+              {Object.keys(pollAnswers).length > 0
+                ? `Save with ${Object.keys(pollAnswers).length} answer${Object.keys(pollAnswers).length === 1 ? "" : "s"}`
+                : "Skip poll & save"}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -292,6 +380,28 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   beliefText: { color: colors.dim, fontSize: 13 },
+  connectionFact: { color: colors.dim, fontSize: 14, lineHeight: 21 },
+  pollQuestion: { color: colors.text, fontSize: 15, fontWeight: "600", marginBottom: 8 },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  chipOn: { backgroundColor: "#FFFFFF", borderColor: "#FFFFFF" },
+  chipText: { color: colors.dim, fontSize: 14 },
+  chipOnText: { color: colors.bg, fontSize: 14, fontWeight: "600" },
+  confirmButton: {
+    backgroundColor: colors.gold,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  confirmText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
   disclosureLabel: { color: colors.faint, fontSize: 12, textTransform: "uppercase", marginBottom: 6 },
   disclosure: { color: colors.text, fontSize: 16, lineHeight: 22, fontStyle: "italic" },
   recordButton: {

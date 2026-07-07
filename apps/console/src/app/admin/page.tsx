@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import { SettingsForm } from "./settings-form";
+import { SurveyQuestions } from "./survey-questions";
 
 // Fixed pipeline status order — statuses with no rows are omitted.
 const STATUS_ORDER = [
@@ -35,7 +36,7 @@ export default async function AdminPage() {
   const campaignId = profile?.campaign_id ?? null;
   const canEdit = profile?.role === "admin" || profile?.role === "manager";
 
-  const [campaign, pipelineHealth, reviewCount, auditRows] = await Promise.all([
+  const [campaign, pipelineHealth, reviewCount, auditRows, surveyQuestions] = await Promise.all([
     campaignId
       ? supabase
           .from("campaigns")
@@ -58,6 +59,11 @@ export default async function AdminPage() {
       .select("id, actor_id, action, entity, entity_id, detail, created_at, profiles(full_name)")
       .order("created_at", { ascending: false })
       .limit(100)
+      .then((r) => r.data ?? []),
+    supabase
+      .from("survey_questions")
+      .select("id, question, options, active, position")
+      .order("position", { ascending: true })
       .then((r) => r.data ?? []),
   ]);
 
@@ -104,6 +110,20 @@ export default async function AdminPage() {
                 canEdit={canEdit}
               />
             </>
+          ) : (
+            <p className="text-sm text-slate">No campaign found for this account.</p>
+          )}
+        </section>
+
+        {/* Door poll questions */}
+        <section className="mb-6 rounded-xl border border-rule bg-white p-5">
+          <h2 className="mb-3 font-serif text-lg font-bold text-navy">Door poll questions</h2>
+          {campaignId ? (
+            <SurveyQuestions
+              questions={surveyQuestions}
+              campaignId={campaignId}
+              canEdit={canEdit}
+            />
           ) : (
             <p className="text-sm text-slate">No campaign found for this account.</p>
           )}

@@ -30,6 +30,8 @@ export interface QueuedCapture {
   contactResult: string | null;
   /** walk_list_items.status to record for this stop, if any. */
   stopStatus: string | null;
+  /** Door-poll answers collected at the door (M6.5), synced with the capture. */
+  surveyResponses?: { questionId: string; answer: string }[];
   attempts: number;
   lastError: string | null;
 }
@@ -58,6 +60,8 @@ export interface SyncPorts {
   upsertConversation(capture: QueuedCapture, audioPath: string | null): Promise<void>;
   /** Record the stop outcome on walk_list_items. */
   updateStopStatus(walkListItemId: string, status: string): Promise<void>;
+  /** Persist door-poll answers (must upsert on question+conversation). */
+  saveSurveyResponses?(capture: QueuedCapture): Promise<void>;
   /** Optional: clean up the local audio file after a successful sync. */
   deleteLocalAudio?(uri: string): Promise<void>;
 }
@@ -104,6 +108,9 @@ export async function syncQueue(ports: SyncPorts): Promise<SyncResult> {
           await ports.uploadAudio(audioPath, bytes);
         }
         await ports.upsertConversation(capture, audioPath);
+        if ((capture.surveyResponses?.length ?? 0) > 0 && ports.saveSurveyResponses) {
+          await ports.saveSurveyResponses(capture);
+        }
       }
       if (capture.walkListItemId && capture.stopStatus) {
         await ports.updateStopStatus(capture.walkListItemId, capture.stopStatus);

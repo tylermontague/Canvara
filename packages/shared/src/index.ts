@@ -27,3 +27,5 @@ export * from "./debrief";
 export * from "./pulse";
 export * from "./issues";
 export * from "./beliefs";
+export * from "./cohorts";
+export * from "./persuasion";

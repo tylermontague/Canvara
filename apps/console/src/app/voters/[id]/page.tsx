@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
+import { fetchPersuasionProfile } from "@canvara/shared";
 
 export default async function VoterDetailPage({
   params,
@@ -39,6 +40,18 @@ export default async function VoterDetailPage({
 
   const age =
     voter.birth_year != null ? new Date().getFullYear() - voter.birth_year : null;
+
+  const persuasionProfile = await fetchPersuasionProfile(supabase, voter.id);
+  const topBeliefs = persuasionProfile.beliefs.slice(0, 5);
+  const resonanceRows = persuasionProfile.resonanceHistory
+    .slice()
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, 8);
+
+  const RESONANCE_CLASS: Record<string, string> = {
+    positive: "text-green-700",
+    negative: "text-red-600",
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-stone">
@@ -122,6 +135,101 @@ export default async function VoterDetailPage({
               </p>
             </section>
           )}
+
+          <section className="rounded-xl border border-rule bg-white p-5">
+            <h2 className="mb-3 font-serif text-lg font-bold text-navy">Persuasion profile</h2>
+
+            <div className="mb-4">
+              <p className="mb-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase">
+                What we've learned in person
+              </p>
+              {persuasionProfile.personalContext.length > 0 ? (
+                <ul className="space-y-1">
+                  {persuasionProfile.personalContext.map((fact, i) => (
+                    <li key={i} className="text-sm text-ink">
+                      · {fact}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-slate">Nothing captured yet.</p>
+              )}
+            </div>
+
+            {persuasionProfile.observedAttributes.length > 0 && (
+              <div className="mb-4">
+                <p className="mb-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase">
+                  Observed at the door
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {persuasionProfile.observedAttributes.map((attr, i) => (
+                    <span
+                      key={i}
+                      className="rounded-lg bg-stone px-3 py-1 text-xs text-ink"
+                      title={`source: ${attr.source}`}
+                    >
+                      {attr.key}: {attr.value}{" "}
+                      <span className="text-slate">({attr.source})</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mb-4">
+              <p className="mb-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase">
+                Likely issue levers
+              </p>
+              {topBeliefs.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {topBeliefs.map((belief) => (
+                    <span
+                      key={belief.issue}
+                      className="rounded-lg bg-navy px-3 py-1 text-xs text-white"
+                    >
+                      {belief.issue.replace(/_/g, " ")} · {Math.round(belief.mean * 100)}%
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate">No beliefs modeled yet.</p>
+              )}
+            </div>
+
+            <div className="mb-4">
+              <p className="mb-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase">
+                Message resonance
+              </p>
+              {resonanceRows.length > 0 ? (
+                <div className="space-y-2">
+                  {resonanceRows.map((r, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between gap-3 border-t border-rule pt-2 first:border-t-0 first:pt-0"
+                    >
+                      <span className="truncate text-sm text-ink">{r.message}</span>
+                      <span className="flex shrink-0 items-center gap-3">
+                        <span
+                          className={`text-xs ${RESONANCE_CLASS[r.response] ?? "text-slate"}`}
+                        >
+                          {r.response}
+                        </span>
+                        <span className="text-xs text-slate">
+                          {new Date(r.at).toLocaleDateString()}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate">No messages tried yet.</p>
+              )}
+            </div>
+
+            <p className="text-xs text-slate italic">
+              Personal evidence overrides cohort inference in all messaging.
+            </p>
+          </section>
 
           <section className="rounded-xl border border-rule bg-white p-5">
             <h2 className="mb-3 font-serif text-lg font-bold text-navy">Conversations</h2>
