@@ -15,7 +15,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "gen:types": "npm run gen:types --workspace @canvara/db",
     "seed:m0": "tsx tests/m0/seed.ts",
-    "test:m0": "node --import tsx --test tests/m0/isolation.test.ts"
+    "test:m0": "node --import tsx --test tests/m0/isolation.test.ts",
+    "test:m1": "node --import tsx --test tests/m1/import.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
