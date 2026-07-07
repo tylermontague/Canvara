@@ -18,7 +18,7 @@ const MODULES: { label: string; href?: string }[] = [
   { label: "Voter Intelligence Lab", href: "/lab" },
   { label: "Message Lab" },
   { label: "Voter Contact Workshop" },
-  { label: "Admin" },
+  { label: "Admin", href: "/admin" },
 ];
 
 export async function AppHeader() {

@@ -5,7 +5,7 @@
 // conversation failed with an audit_log entry rather than wedging the queue.
 
 import type { DbClient, Json, Tables } from "@canvara/db";
-import type { TranscriptUtterance } from "@canvara/shared";
+import { updateBeliefsForSignal, type TranscriptUtterance } from "@canvara/shared";
 import { transcribe } from "./deepgram";
 import { extractSignal, signalToRow } from "./extract";
 import { generateDebriefSummary } from "./debrief";
@@ -174,6 +174,40 @@ async function extractStage(db: DbClient, convo: Conversation): Promise<"extract
         reason: "low_confidence",
       });
       if (reviewErr) throw new Error(`review queue: ${reviewErr.message}`);
+    }
+  }
+
+  // Belief engine v1 (IE-5): fold this conversation's evidence into the
+  // voter's per-issue Beta beliefs. Skipped on review-bound extractions —
+  // low-confidence evidence waits for adjudication. Re-read voter_id: the
+  // correlation stage may have just assigned it.
+  if (finalStatus === "extracted") {
+    const { data: fresh } = await db
+      .from("conversations")
+      .select("voter_id")
+      .eq("id", convo.id)
+      .single();
+    if (fresh?.voter_id) {
+      try {
+        const result = await updateBeliefsForSignal(db, {
+          campaignId: convo.campaign_id,
+          voterId: fresh.voter_id,
+          topIssues: outcome.signal.top_issues,
+          provenance: Object.fromEntries(
+            outcome.signal.provenance.map((p) => [p.issue, p.source]),
+          ),
+          observedAt: convo.recorded_at,
+          fullConversation: convo.contact_result === "full_conversation",
+        });
+        if (result.skippedUnknown.length > 0) {
+          console.warn(
+            `[pipeline] ${convo.id}: issues outside taxonomy skipped for beliefs: ${result.skippedUnknown.join(", ")}`,
+          );
+        }
+      } catch (err) {
+        // Beliefs are derived state — never block the pipeline on them.
+        console.warn(`[pipeline] belief update failed for ${convo.id}:`, err);
+      }
     }
   }
 

@@ -38,6 +38,7 @@ Requirements: `Canvara_Master_Requirements.docx` (in the Canvara Claude project)
 | `npm run test:m3` | M3 exit test: scripted conversation → correct signals on all 11 fields |
 | `npm run test:m4` | M4 exit test: debrief correction round-trips into signal + audit log |
 | `npm run test:m5` | M5 exit test: 100 seeded conversations render correct aggregates |
+| `npm run test:m6` | M6 exit test: belief engine, retention purge, settings RLS, health |
 
 ## M0 exit test
 

@@ -656,6 +656,16 @@ export type Database = {
         };
         Relationships: [];
       };
+      pipeline_health: {
+        Row: {
+          campaign_id: string;
+          status: string;
+          n: number;
+          newest: string;
+          oldest_in_flight: string | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       current_campaign_id: {

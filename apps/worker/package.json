@@ -25,6 +25,7 @@
     ".": "./src/index.ts",
     "./pipeline": "./src/pipeline.ts",
     "./extract": "./src/extract.ts",
-    "./deepgram": "./src/deepgram.ts"
+    "./deepgram": "./src/deepgram.ts",
+    "./retention": "./src/retention.ts"
   }
 }

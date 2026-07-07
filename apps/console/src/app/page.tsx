@@ -30,7 +30,11 @@ const MODULES: { label: string; href?: string; description: string }[] = [
     label: "Voter Contact Workshop",
     description: "Coming in a later milestone.",
   },
-  { label: "Admin", description: "Coming in a later milestone." },
+  {
+    label: "Admin",
+    href: "/admin",
+    description: "Campaign settings, pipeline health, audit trail.",
+  },
 ];
 
 export default async function Home() {

@@ -186,6 +186,20 @@ export default function StopScreen() {
           {v.precinct && <Fact label="Precinct" value={v.precinct} />}
           <Fact label="Vote history" value={voteCount > 0 ? `${voteCount} elections` : "none on file"} />
         </View>
+        {(v.beliefs?.length ?? 0) > 0 && (
+          <View style={styles.beliefs}>
+            <Text style={styles.beliefsLabel}>LIKELY CARES ABOUT</Text>
+            <View style={styles.beliefsRow}>
+              {v.beliefs!.map((b) => (
+                <View key={b.issue} style={styles.beliefChip}>
+                  <Text style={styles.beliefText}>
+                    {b.issue.replace(/_/g, " ")} · {Math.round(b.mean * 100)}%
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </View>
 
       {phase === "briefing" && (
@@ -266,6 +280,18 @@ const styles = StyleSheet.create({
   fact: {},
   factLabel: { color: colors.faint, fontSize: 11, textTransform: "uppercase" },
   factValue: { color: colors.text, fontSize: 15, fontWeight: "600", marginTop: 1 },
+  beliefs: { marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border },
+  beliefsLabel: { color: colors.faint, fontSize: 11, letterSpacing: 1.2, marginBottom: 8 },
+  beliefsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  beliefChip: {
+    backgroundColor: colors.bg,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  beliefText: { color: colors.dim, fontSize: 13 },
   disclosureLabel: { color: colors.faint, fontSize: 12, textTransform: "uppercase", marginBottom: 6 },
   disclosure: { color: colors.text, fontSize: 16, lineHeight: 22, fontStyle: "italic" },
   recordButton: {

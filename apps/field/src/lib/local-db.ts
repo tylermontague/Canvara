@@ -92,6 +92,8 @@ export interface CachedVoter {
   gender: string | null;
   precinct: string | null;
   vote_history: Record<string, boolean> | null;
+  /** Tier-2 briefing (FA-3): belief-engine top issues, synced with the list. */
+  beliefs?: { issue: string; mean: number; strength: number }[];
 }
 
 export interface CachedStop {

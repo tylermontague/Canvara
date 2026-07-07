@@ -5,6 +5,7 @@
 import * as Network from "expo-network";
 import { File } from "expo-file-system";
 import {
+  fetchVoterBeliefs,
   syncQueue,
   type QueuedCapture,
   type SyncPorts,
@@ -119,6 +120,17 @@ export async function syncDown(profile: Profile): Promise<{ lists: number; stops
       .in("walk_list_id", listIds)
       .order("position");
     if (itemsErr) throw new Error(itemsErr.message);
+
+    // Tier-2 briefing (FA-3): belief-engine predictions, cached with the
+    // list so the door screen stays instant and offline-safe.
+    const voterIds = [...new Set((items ?? []).map((i) => i.voter_id).filter((v): v is string => v !== null))];
+    let beliefs = new Map<string, { issue: string; mean: number; strength: number }[]>();
+    try {
+      beliefs = await fetchVoterBeliefs(supabase, voterIds);
+    } catch {
+      // Beliefs are an enhancement — sync-down must not fail on them.
+    }
+
     stops = (items ?? []).map((i) => ({
       item_id: i.id,
       walk_list_id: i.walk_list_id,
@@ -136,6 +148,11 @@ export async function syncDown(profile: Profile): Promise<{ lists: number; stops
         gender: i.voters?.gender ?? null,
         precinct: i.voters?.precinct ?? null,
         vote_history: (i.voters?.vote_history as Record<string, boolean> | null) ?? null,
+        beliefs: i.voter_id
+          ? (beliefs.get(i.voter_id) ?? [])
+              .filter((b) => b.strength >= 1)
+              .slice(0, 3)
+          : [],
       },
     }));
   }

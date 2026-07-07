@@ -4,11 +4,15 @@
 
 import { loadConfig } from "./config";
 import { processAvailable } from "./pipeline";
+import { runRetentionSweep } from "./retention";
+
+const RETENTION_SWEEP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 async function main() {
   const { db, deepgramKey, pollIntervalMs } = loadConfig();
   console.log(`canvara worker: polling every ${pollIntervalMs}ms`);
 
+  let lastSweep = 0;
   let stopping = false;
   process.on("SIGINT", () => {
     stopping = true;
@@ -19,6 +23,17 @@ async function main() {
 
   while (!stopping) {
     try {
+      // Daily retention sweep (CX-2), first pass on startup.
+      if (Date.now() - lastSweep > RETENTION_SWEEP_INTERVAL_MS) {
+        lastSweep = Date.now();
+        const retention = await runRetentionSweep(db);
+        if (retention.purged > 0 || retention.errors.length > 0) {
+          console.log(
+            `[worker] retention: purged=${retention.purged} errors=${retention.errors.length}`,
+          );
+        }
+      }
+
       const stats = await processAvailable(db, deepgramKey);
       const total = stats.transcribed + stats.extracted + stats.review + stats.failed;
       if (total > 0) {
