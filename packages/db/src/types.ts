@@ -614,7 +614,17 @@ export type Database = {
         ];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      voter_coords: {
+        Row: {
+          voter_id: string;
+          campaign_id: string;
+          lat: number;
+          lng: number;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       current_campaign_id: {
         Args: Record<PropertyKey, never>;
