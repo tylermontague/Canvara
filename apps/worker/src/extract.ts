@@ -17,7 +17,12 @@ const BULK_MODEL = "claude-haiku-4-5";
 const ESCALATION_MODEL = "claude-sonnet-4-6";
 export const CONFIDENCE_THRESHOLD = 0.6;
 
-const client = new Anthropic();
+// Lazy: constructed on first use so module import never precedes env loading.
+let _client: Anthropic | null = null;
+function client(): Anthropic {
+  _client ??= new Anthropic();
+  return _client;
+}
 
 export interface ExtractionOutcome {
   signal: SignalObject;
@@ -33,7 +38,7 @@ async function runExtraction(
   transcriptText: string,
   options: { thinking?: boolean } = {},
 ): Promise<SignalObject | null> {
-  const response = await client.messages.parse({
+  const response = await client().messages.parse({
     model,
     max_tokens: 8000,
     system: extractSignalPrompt.text,
