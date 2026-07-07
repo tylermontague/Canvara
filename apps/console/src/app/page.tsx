@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Role } from "@canvara/shared";
+import { AppHeader } from "@/components/app-header";
 import { SignOutButton } from "./sign-out-button";
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -13,12 +14,22 @@ const ROLE_LABELS: Record<Role, string> = {
 };
 
 // Console navigation v1 (MODULE_MAP.md) — remaining rooms land in later milestones.
-const MODULES: { label: string; href?: string }[] = [
-  { label: "Field Office", href: "/voters" },
-  { label: "Voter Intelligence Lab" },
-  { label: "Message Lab" },
-  { label: "Voter Contact Workshop" },
-  { label: "Admin" },
+const MODULES: { label: string; href?: string; description: string }[] = [
+  {
+    label: "Field Office",
+    href: "/voters",
+    description: "Voter file, search, and walk lists.",
+  },
+  {
+    label: "Voter Intelligence Lab",
+    description: "Coming in a later milestone.",
+  },
+  { label: "Message Lab", description: "Coming in a later milestone." },
+  {
+    label: "Voter Contact Workshop",
+    description: "Coming in a later milestone.",
+  },
+  { label: "Admin", description: "Coming in a later milestone." },
 ];
 
 export default async function Home() {
@@ -38,64 +49,65 @@ export default async function Home() {
 
   if (!profile) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950 p-6">
-        <div className="max-w-md text-center">
-          <h1 className="mb-2 text-xl font-semibold text-zinc-50">
-            No campaign profile
-          </h1>
-          <p className="mb-6 text-sm text-zinc-400">
-            Your account ({user.email}) is not assigned to a campaign. Ask a
-            campaign admin to create your profile.
-          </p>
-          <SignOutButton />
-        </div>
-      </main>
+      <div className="flex min-h-screen flex-col">
+        <AppHeader />
+        <main className="flex flex-1 items-center justify-center bg-stone p-6">
+          <div className="max-w-md rounded-xl border border-rule bg-white p-8 text-center">
+            <h1 className="mb-2 font-serif text-xl font-bold text-navy">
+              No campaign profile
+            </h1>
+            <p className="mb-6 text-sm text-slate">
+              Your account ({user.email}) is not assigned to a campaign. Ask a
+              campaign admin to create your profile.
+            </p>
+            <SignOutButton />
+          </div>
+        </main>
+      </div>
     );
   }
 
   const roleLabel = ROLE_LABELS[profile.role as Role] ?? profile.role;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
-        <div className="flex items-baseline gap-6">
-          <span className="text-lg font-semibold">Canvara</span>
-          <nav className="hidden gap-4 text-sm text-zinc-400 md:flex">
-            {MODULES.map((m) =>
-              m.href ? (
-                <Link key={m.label} href={m.href} className="text-zinc-200 hover:text-white">
-                  {m.label}
-                </Link>
-              ) : (
-                <span
-                  key={m.label}
-                  className="cursor-not-allowed"
-                  title="Coming in a later milestone"
-                >
-                  {m.label}
-                </span>
-              ),
-            )}
-          </nav>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right text-sm">
-            <div>{profile.full_name ?? user.email}</div>
-            <div className="text-zinc-400">
-              {roleLabel} · {profile.campaigns?.name}
-            </div>
-          </div>
-          <SignOutButton />
-        </div>
-      </header>
-      <main className="p-6">
-        <h1 className="mb-2 text-2xl font-semibold">
+    <div className="flex min-h-screen flex-col bg-stone">
+      <AppHeader />
+      <main className="flex-1 p-6">
+        <h1 className="mb-1 font-serif text-2xl font-bold text-navy">
           {profile.campaigns?.name}
         </h1>
-        <p className="text-sm text-zinc-400">
-          {profile.campaigns?.state} · Signed in as {user.email} ({roleLabel}).
-          M0 foundation — modules come online in M1+.
+        <p className="mb-8 text-sm text-slate">
+          {profile.campaigns?.state} · Signed in as {user.email} (
+          {roleLabel}). M0 foundation — modules come online in M1+.
         </p>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {MODULES.map((m) =>
+            m.href ? (
+              <Link
+                key={m.label}
+                href={m.href}
+                className="rounded-xl border border-rule bg-white p-5 transition-colors duration-200 ease-out hover:bg-stone"
+              >
+                <h2 className="mb-1 font-serif text-lg font-bold text-navy">
+                  {m.label}
+                </h2>
+                <p className="text-sm text-slate">{m.description}</p>
+              </Link>
+            ) : (
+              <div
+                key={m.label}
+                className="cursor-not-allowed rounded-xl border border-rule bg-white p-5 opacity-60"
+                title="Coming in a later milestone"
+              >
+                <h2 className="mb-1 font-serif text-lg font-bold text-navy">
+                  {m.label}
+                </h2>
+                <p className="text-sm text-slate">{m.description}</p>
+              </div>
+            ),
+          )}
+        </div>
       </main>
     </div>
   );

@@ -130,12 +130,12 @@ export function ImportWizard() {
     return (
       <div className="max-w-xl space-y-4">
         {phase.step === "error" && (
-          <p className="rounded-md border border-red-900 bg-red-950/50 p-3 text-sm text-red-300">
+          <p className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">
             {phase.message}
           </p>
         )}
-        <label className="block cursor-pointer rounded-lg border-2 border-dashed border-zinc-700 p-10 text-center hover:border-zinc-500">
-          <span className="text-zinc-300">Choose a CSV file…</span>
+        <label className="block cursor-pointer rounded-xl border-2 border-dashed border-rule bg-white p-10 text-center transition-colors duration-200 ease-out hover:border-navy">
+          <span className="text-navy">Choose a CSV file…</span>
           <input
             type="file"
             accept=".csv,text/csv"
@@ -146,7 +146,7 @@ export function ImportWizard() {
             }}
           />
         </label>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-slate">
           Disclaimers, preamble rows, and split headers are handled — you&apos;ll confirm the
           header row and column mapping before anything is imported.
         </p>
@@ -158,11 +158,14 @@ export function ImportWizard() {
     const pct = Math.round((phase.done / phase.total) * 100);
     return (
       <div className="max-w-xl space-y-3">
-        <p className="text-sm text-zinc-300">
+        <p className="text-sm text-ink">
           Importing {phase.total.toLocaleString()} voters… {phase.done.toLocaleString()} done
         </p>
-        <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
-          <div className="h-full bg-zinc-100 transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-2 overflow-hidden rounded-full bg-rule">
+          <div
+            className="h-full bg-navy transition-all duration-200 ease-out"
+            style={{ width: `${pct}%` }}
+          />
         </div>
       </div>
     );
@@ -171,12 +174,15 @@ export function ImportWizard() {
   if (phase.step === "complete") {
     return (
       <div className="max-w-xl space-y-4">
-        <p className="rounded-md border border-emerald-900 bg-emerald-950/50 p-3 text-sm text-emerald-300">
+        <p className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-800">
           Imported {phase.imported.toLocaleString()} voters
           {phase.skipped > 0 ? ` (${phase.skipped} empty rows skipped)` : ""}.
         </p>
         <div className="flex gap-3">
-          <a href="/voters" className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900">
+          <a
+            href="/voters"
+            className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-gold-hover"
+          >
             View voters
           </a>
           <button
@@ -184,7 +190,7 @@ export function ImportWizard() {
               setRows([]);
               setPhase({ step: "upload" });
             }}
-            className="rounded-md border border-zinc-700 px-4 py-2 text-sm"
+            className="rounded-lg border border-rule bg-white px-4 py-2 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone"
           >
             Import another file
           </button>
@@ -199,25 +205,25 @@ export function ImportWizard() {
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="mb-1 font-medium">
-          1. Header row <span className="text-sm font-normal text-zinc-500">({fileName})</span>
+        <h2 className="mb-1 font-serif text-lg font-bold text-navy">
+          1. Header row <span className="font-sans text-sm font-normal text-slate">({fileName})</span>
         </h2>
-        <p className="mb-2 text-sm text-zinc-400">
+        <p className="mb-2 text-sm text-slate">
           Click the row that contains the column names. Rows above it are ignored.
         </p>
-        <div className="overflow-x-auto rounded-lg border border-zinc-800">
+        <div className="overflow-x-auto rounded-xl border border-rule bg-white">
           <table className="w-full text-xs">
             <tbody>
               {rows.slice(0, PREVIEW_ROWS).map((row, i) => (
                 <tr
                   key={i}
                   onClick={() => selectHeaderRow(i)}
-                  className={`cursor-pointer border-t border-zinc-800/60 first:border-t-0 ${
+                  className={`cursor-pointer border-t border-rule transition-colors duration-200 ease-out first:border-t-0 ${
                     i === headerRow
-                      ? "bg-zinc-100 text-zinc-900"
+                      ? "bg-navy text-white"
                       : i < headerRow
-                        ? "text-zinc-600 hover:bg-zinc-900"
-                        : "hover:bg-zinc-900"
+                        ? "text-slate hover:bg-stone"
+                        : "hover:bg-stone"
                   }`}
                 >
                   <td className="px-2 py-1 font-mono text-[10px] opacity-60">{i + 1}</td>
@@ -234,18 +240,18 @@ export function ImportWizard() {
       </section>
 
       <section>
-        <h2 className="mb-1 font-medium">2. Column mapping</h2>
-        <p className="mb-3 text-sm text-zinc-400">
+        <h2 className="mb-1 font-serif text-lg font-bold text-navy">2. Column mapping</h2>
+        <p className="mb-3 text-sm text-slate">
           Suggested from the header names — adjust as needed. Unmapped fields import as blank.
         </p>
         <div className="grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2">
           {singleFields.map((f) => (
             <label key={f.key} className="flex items-center justify-between gap-3 text-sm">
-              <span className="text-zinc-300">{f.label}</span>
+              <span className="text-ink">{f.label}</span>
               <select
                 value={mapping[f.key]?.[0] ?? ""}
                 onChange={(e) => setSingle(f.key, e.target.value)}
-                className="w-56 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5"
+                className="w-56 rounded-lg border border-rule bg-white px-2 py-1.5 text-ink"
               >
                 <option value="">— not in file —</option>
                 {header.map((_, i) => (
@@ -258,13 +264,13 @@ export function ImportWizard() {
           ))}
           {Array.from({ length: ADDRESS_SLOTS }).map((_, slot) => (
             <label key={`addr-${slot}`} className="flex items-center justify-between gap-3 text-sm">
-              <span className="text-zinc-300">
+              <span className="text-ink">
                 Street address{slot > 0 ? ` (part ${slot + 1})` : ""}
               </span>
               <select
                 value={mapping.address?.[slot] ?? ""}
                 onChange={(e) => setAddressSlot(slot, e.target.value)}
-                className="w-56 rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5"
+                className="w-56 rounded-lg border border-rule bg-white px-2 py-1.5 text-ink"
               >
                 <option value="">{slot === 0 ? "— not in file —" : "— none —"}</option>
                 {header.map((_, i) => (
@@ -279,19 +285,22 @@ export function ImportWizard() {
       </section>
 
       <section>
-        <h2 className="mb-1 font-medium">3. Preview & import</h2>
+        <h2 className="mb-1 font-serif text-lg font-bold text-navy">3. Preview &amp; import</h2>
         {mapped && (
           <>
-            <p className="mb-2 text-sm text-zinc-400">
+            <p className="mb-2 text-sm text-slate">
               {mapped.voters.length.toLocaleString()} voters ready
               {mapped.skipped > 0 ? ` · ${mapped.skipped} empty rows will be skipped` : ""}
             </p>
-            <div className="mb-4 overflow-x-auto rounded-lg border border-zinc-800">
+            <div className="mb-4 overflow-x-auto rounded-xl border border-rule bg-white">
               <table className="w-full text-xs">
-                <thead className="bg-zinc-900 text-left text-zinc-400">
+                <thead className="text-left">
                   <tr>
                     {VOTER_FIELDS.map((f) => (
-                      <th key={f.key} className="px-2 py-1.5 font-medium">
+                      <th
+                        key={f.key}
+                        className="border-b border-rule px-2 py-1.5 text-[10px] font-medium tracking-[0.08em] text-slate uppercase"
+                      >
                         {f.label}
                       </th>
                     ))}
@@ -299,10 +308,10 @@ export function ImportWizard() {
                 </thead>
                 <tbody>
                   {mapped.voters.slice(0, 5).map((v, i) => (
-                    <tr key={i} className="border-t border-zinc-800/60">
+                    <tr key={i} className="border-t border-rule">
                       {VOTER_FIELDS.map((f) => (
-                        <td key={f.key} className="px-2 py-1.5">
-                          {v[f.key] ?? <span className="text-zinc-600">—</span>}
+                        <td key={f.key} className="px-2 py-1.5 text-ink">
+                          {v[f.key] ?? <span className="text-slate">—</span>}
                         </td>
                       ))}
                     </tr>
@@ -313,7 +322,7 @@ export function ImportWizard() {
             <button
               onClick={() => void runImport()}
               disabled={mapped.voters.length === 0}
-              className="rounded-md bg-zinc-100 px-5 py-2 text-sm font-medium text-zinc-900 hover:bg-white disabled:opacity-50"
+              className="rounded-lg bg-gold px-5 py-2 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-gold-hover disabled:opacity-50"
             >
               Import {mapped.voters.length.toLocaleString()} voters
             </button>

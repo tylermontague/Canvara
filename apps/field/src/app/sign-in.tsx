@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { supabase } from "@/lib/supabase";
-import { colors } from "@/lib/theme";
+import { colors, fonts } from "@/lib/theme";
+import { CanvaraMark } from "@/components/canvara-mark";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -36,7 +37,13 @@ export default function SignIn() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={styles.inner}>
-        <Text style={styles.title}>Canvara Field</Text>
+        <View style={styles.brandRow}>
+          <CanvaraMark size={64} />
+          <View>
+            <Text style={styles.title}>CANVARA</Text>
+            <Text style={styles.tagline}>FIELD</Text>
+          </View>
+        </View>
         <Text style={styles.subtitle}>Sign in with your campaign account.</Text>
         <TextInput
           style={styles.input}
@@ -73,7 +80,15 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, justifyContent: "center" },
   inner: { paddingHorizontal: 24, gap: 12 },
-  title: { color: colors.text, fontSize: 28, fontWeight: "700" },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 8 },
+  title: {
+    color: colors.text,
+    fontSize: 30,
+    fontWeight: "700",
+    fontFamily: fonts.display,
+    letterSpacing: 5,
+  },
+  tagline: { color: colors.faint, fontSize: 12, letterSpacing: 6, marginTop: 2 },
   subtitle: { color: colors.dim, fontSize: 15, marginBottom: 12 },
   input: {
     backgroundColor: colors.card,

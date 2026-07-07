@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "papaparse": "^5.5.4",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@canvara/db": "*"
   }
 }

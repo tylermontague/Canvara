@@ -395,6 +395,7 @@ export type Database = {
           model_used: string;
           prompt_version: string;
           canvasser_confirmed: boolean | null;
+          debrief_summary: string | null;
           corrections: Json | null;
           created_at: string;
         };
@@ -415,6 +416,7 @@ export type Database = {
           model_used: string;
           prompt_version: string;
           canvasser_confirmed?: boolean | null;
+          debrief_summary?: string | null;
           corrections?: Json | null;
           created_at?: string;
         };
@@ -435,6 +437,7 @@ export type Database = {
           model_used?: string;
           prompt_version?: string;
           canvasser_confirmed?: boolean | null;
+          debrief_summary?: string | null;
           corrections?: Json | null;
           created_at?: string;
         };

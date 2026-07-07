@@ -8,6 +8,7 @@ import type { DbClient, Json, Tables } from "@canvara/db";
 import type { TranscriptUtterance } from "@canvara/shared";
 import { transcribe } from "./deepgram";
 import { extractSignal, signalToRow } from "./extract";
+import { generateDebriefSummary } from "./debrief";
 import { parseWkbPoint } from "./wkb";
 
 const CORRELATION_RADIUS_M = 75;
@@ -134,11 +135,21 @@ async function extractStage(db: DbClient, convo: Conversation): Promise<"extract
 
   const outcome = await extractSignal(transcript);
 
+  // Debrief note for the canvasser (FA-5). Best-effort — a missing summary
+  // must never block the signal itself.
+  let debriefSummary = "";
+  try {
+    debriefSummary = await generateDebriefSummary(transcript, outcome.signal);
+  } catch (err) {
+    console.warn(`[pipeline] debrief summary failed for ${convo.id}:`, err);
+  }
+
   const { error: signalErr } = await db.from("signals").upsert(
     {
       campaign_id: convo.campaign_id,
       conversation_id: convo.id,
       ...signalToRow(outcome.signal),
+      debrief_summary: debriefSummary || null,
       model_used: outcome.modelUsed,
       prompt_version: outcome.promptVersion,
     },

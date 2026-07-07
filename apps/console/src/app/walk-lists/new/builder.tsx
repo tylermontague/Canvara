@@ -148,7 +148,7 @@ export function WalkListBuilder() {
   return (
     <div className="max-w-4xl space-y-8">
       <section>
-        <h2 className="mb-2 font-medium">1. Find voters</h2>
+        <h2 className="mb-2 font-serif text-lg font-bold text-navy">1. Find voters</h2>
         <div className="flex flex-wrap gap-2">
           {(
             [
@@ -164,19 +164,19 @@ export function WalkListBuilder() {
               placeholder={label}
               value={filters[key]}
               onChange={(e) => setFilters((f) => ({ ...f, [key]: e.target.value }))}
-              className="w-36 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm outline-none focus:border-zinc-400"
+              className="w-36 rounded-lg border border-rule bg-white px-3 py-1.5 text-sm text-ink outline-none transition-colors duration-200 ease-out focus:border-gold"
             />
           ))}
           <button
             onClick={() => void search()}
             disabled={busy}
-            className="rounded-md border border-zinc-600 px-4 py-1.5 text-sm hover:bg-zinc-800 disabled:opacity-50"
+            className="rounded-lg border border-rule bg-white px-4 py-1.5 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone disabled:opacity-50"
           >
             Search
           </button>
         </div>
         {candidates && (
-          <p className="mt-2 text-sm text-zinc-400">
+          <p className="mt-2 text-sm text-slate">
             {totalMatching.toLocaleString()} match
             {totalMatching > CANDIDATE_LIMIT
               ? ` — showing the first ${CANDIDATE_LIMIT}; narrow the filters for larger turfs`
@@ -188,19 +188,19 @@ export function WalkListBuilder() {
       {candidates && candidates.length > 0 && (
         <>
           <section>
-            <h2 className="mb-2 font-medium">
+            <h2 className="mb-2 font-serif text-lg font-bold text-navy">
               2. Stops{" "}
-              <span className="text-sm font-normal text-zinc-400">
+              <span className="font-sans text-sm font-normal text-slate">
                 ({included.length} of {candidates.length} included)
               </span>
             </h2>
-            <div className="max-h-80 overflow-y-auto rounded-lg border border-zinc-800">
+            <div className="max-h-80 overflow-y-auto rounded-xl border border-rule bg-white">
               <table className="w-full text-sm">
                 <tbody>
                   {candidates.map((v) => {
                     const isIncluded = !excluded.has(v.id);
                     return (
-                      <tr key={v.id} className="border-t border-zinc-800/60 first:border-t-0">
+                      <tr key={v.id} className="border-t border-rule first:border-t-0">
                         <td className="w-8 px-3 py-1.5">
                           <input
                             type="checkbox"
@@ -215,10 +215,10 @@ export function WalkListBuilder() {
                             }
                           />
                         </td>
-                        <td className={`px-3 py-1.5 ${isIncluded ? "" : "text-zinc-600 line-through"}`}>
+                        <td className={`px-3 py-1.5 ${isIncluded ? "text-ink" : "text-slate line-through"}`}>
                           {v.last_name}, {v.first_name}
                         </td>
-                        <td className={`px-3 py-1.5 ${isIncluded ? "text-zinc-400" : "text-zinc-600"}`}>
+                        <td className={`px-3 py-1.5 ${isIncluded ? "text-slate" : "text-slate/60"}`}>
                           {v.address}, {v.city} {v.zip}
                         </td>
                       </tr>
@@ -230,18 +230,18 @@ export function WalkListBuilder() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="font-medium">3. Name & assign</h2>
+            <h2 className="font-serif text-lg font-bold text-navy">3. Name & assign</h2>
             <div className="flex flex-wrap gap-3">
               <input
                 placeholder="Walk list name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-64 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm outline-none focus:border-zinc-400"
+                className="w-64 rounded-lg border border-rule bg-white px-3 py-2 text-sm text-ink outline-none transition-colors duration-200 ease-out focus:border-gold"
               />
               <select
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
-                className="w-64 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+                className="w-64 rounded-lg border border-rule bg-white px-3 py-2 text-sm text-ink"
               >
                 <option value="">Unassigned</option>
                 {assignees.map((a) => (
@@ -253,12 +253,12 @@ export function WalkListBuilder() {
               <button
                 onClick={() => void create()}
                 disabled={busy || !name.trim() || included.length === 0}
-                className="rounded-md bg-zinc-100 px-5 py-2 text-sm font-medium text-zinc-900 hover:bg-white disabled:opacity-50"
+                className="rounded-lg bg-gold px-5 py-2 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-gold-hover disabled:opacity-50"
               >
                 {busy ? "Creating…" : `Create with ${included.length} stops`}
               </button>
             </div>
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </section>
         </>
       )}

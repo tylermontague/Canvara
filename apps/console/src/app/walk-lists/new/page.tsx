@@ -1,20 +1,20 @@
-import Link from "next/link";
+import { AppHeader } from "@/components/app-header";
 import { WalkListBuilder } from "./builder";
 
 export default function NewWalkListPage() {
   return (
-    <div className="min-h-screen bg-zinc-950 p-6 text-zinc-100">
-      <div className="mb-6">
-        <Link href="/walk-lists" className="text-sm text-zinc-400 hover:text-zinc-200">
-          ← Walk lists
-        </Link>
-        <h1 className="text-2xl font-semibold">New walk list</h1>
-        <p className="text-sm text-zinc-400">
-          Filter voters, pick who to include, assign a canvasser. Stops are ordered
-          street-by-street automatically.
-        </p>
-      </div>
-      <WalkListBuilder />
+    <div className="flex min-h-screen flex-col bg-stone">
+      <AppHeader />
+      <main className="flex-1 p-6">
+        <div className="mb-6">
+          <h1 className="font-serif text-2xl font-bold text-navy">New walk list</h1>
+          <p className="text-sm text-slate">
+            Filter voters, pick who to include, assign a canvasser. Stops are ordered
+            street-by-street automatically.
+          </p>
+        </div>
+        <WalkListBuilder />
+      </main>
     </div>
   );
 }

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Canvara icon mark — built to the construction spec in the brand guide:
+       navy rounded-square badge, bold white C-arc with rounded caps opening
+       right, gold endpoint dots (#C8973A), soft white centered dot at 35%. -->
+  <rect width="400" height="400" rx="90" fill="#0F2A4A"/>
+  <path d="M 267.5 119.6 A 105 105 0 1 0 267.5 280.4"
+        fill="none" stroke="#FFFFFF" stroke-width="52" stroke-linecap="round"/>
+  <circle cx="95" cy="200" r="15" fill="#FFFFFF" opacity="0.35"/>
+  <circle cx="267.5" cy="119.6" r="30" fill="#C8973A"/>
+  <circle cx="267.5" cy="280.4" r="30" fill="#C8973A"/>
+</svg>

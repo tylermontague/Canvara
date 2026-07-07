@@ -1,19 +1,19 @@
-import Link from "next/link";
+import { AppHeader } from "@/components/app-header";
 import { ImportWizard } from "./import-wizard";
 
 export default function ImportPage() {
   return (
-    <div className="min-h-screen bg-zinc-950 p-6 text-zinc-100">
-      <div className="mb-6">
-        <Link href="/voters" className="text-sm text-zinc-400 hover:text-zinc-200">
-          ← Voters
-        </Link>
-        <h1 className="text-2xl font-semibold">Import voter file</h1>
-        <p className="text-sm text-zinc-400">
-          Upload a CSV, confirm the header row, map columns to voter fields, import.
-        </p>
-      </div>
-      <ImportWizard />
+    <div className="flex min-h-screen flex-col bg-stone">
+      <AppHeader />
+      <main className="flex-1 p-6">
+        <div className="mb-6">
+          <h1 className="font-serif text-2xl font-bold text-navy">Import voter file</h1>
+          <p className="text-sm text-slate">
+            Upload a CSV, confirm the header row, map columns to voter fields, import.
+          </p>
+        </div>
+        <ImportWizard />
+      </main>
     </div>
   );
 }

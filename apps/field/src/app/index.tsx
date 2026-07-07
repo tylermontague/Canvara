@@ -107,6 +107,13 @@ export default function Home() {
 
       {notice && <Text style={styles.notice}>{notice}</Text>}
 
+      <Link href="/debriefs" asChild>
+        <TouchableOpacity style={styles.debriefLink}>
+          <Text style={styles.debriefLinkText}>Debriefs</Text>
+          <Text style={styles.debriefLinkHint}>Confirm or correct your conversation notes →</Text>
+        </TouchableOpacity>
+      </Link>
+
       <Text style={styles.sectionTitle}>Your walk lists</Text>
       <FlatList
         data={lists}
@@ -150,6 +157,16 @@ const styles = StyleSheet.create({
   shiftButtonText: { color: colors.text, fontWeight: "600" },
   notice: { color: colors.amber, fontSize: 13, marginBottom: 10 },
   sectionTitle: { color: colors.text, fontSize: 16, fontWeight: "600", marginVertical: 8 },
+  debriefLink: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  debriefLinkText: { color: colors.text, fontSize: 15, fontWeight: "600" },
+  debriefLinkHint: { color: colors.faint, fontSize: 12, marginTop: 2 },
   card: {
     backgroundColor: colors.card,
     borderColor: colors.border,

@@ -19,6 +19,8 @@ export default function RootLayout() {
         <Stack.Screen name="sign-in" options={{ title: "Sign in", headerShown: false }} />
         <Stack.Screen name="walk-list/[id]" options={{ title: "Walk list" }} />
         <Stack.Screen name="stop/[itemId]" options={{ title: "Door" }} />
+        <Stack.Screen name="debriefs" options={{ title: "Debriefs" }} />
+        <Stack.Screen name="debrief/[signalId]" options={{ title: "Debrief" }} />
       </Stack>
     </SessionProvider>
   );

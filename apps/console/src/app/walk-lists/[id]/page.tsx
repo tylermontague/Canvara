@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { AppHeader } from "@/components/app-header";
 import { StopList } from "./stop-list";
 
 export default async function WalkListDetailPage({
@@ -27,19 +27,19 @@ export default async function WalkListDetailPage({
     .order("position", { ascending: true });
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-6 text-zinc-100">
-      <div className="mb-6">
-        <Link href="/walk-lists" className="text-sm text-zinc-400 hover:text-zinc-200">
-          ← Walk lists
-        </Link>
-        <h1 className="text-2xl font-semibold">{list.name}</h1>
-        <p className="text-sm text-zinc-400">
-          {items?.length ?? 0} stops · assigned to{" "}
-          {list.profiles?.full_name ?? "no one yet"} · created{" "}
-          {new Date(list.created_at).toLocaleDateString()}
-        </p>
-      </div>
-      <StopList items={items ?? []} />
+    <div className="flex min-h-screen flex-col bg-stone">
+      <AppHeader />
+      <main className="flex-1 p-6">
+        <div className="mb-6">
+          <h1 className="font-serif text-2xl font-bold text-navy">{list.name}</h1>
+          <p className="text-sm text-slate">
+            {items?.length ?? 0} stops · assigned to{" "}
+            {list.profiles?.full_name ?? "no one yet"} · created{" "}
+            {new Date(list.created_at).toLocaleDateString()}
+          </p>
+        </div>
+        <StopList items={items ?? []} />
+      </main>
     </div>
   );
 }

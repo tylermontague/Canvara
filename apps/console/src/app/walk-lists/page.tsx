@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { AppHeader } from "@/components/app-header";
 
 export default async function WalkListsPage() {
   const supabase = await createClient();
@@ -10,71 +11,79 @@ export default async function WalkListsPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-6 text-zinc-100">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">
-            ← Console
-          </Link>
-          <h1 className="text-2xl font-semibold">Walk lists</h1>
+    <div className="flex min-h-screen flex-col bg-stone">
+      <AppHeader />
+      <main className="flex-1 p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="font-serif text-2xl font-bold text-navy">Walk lists</h1>
+          </div>
+          <div className="flex gap-3">
+            <Link
+              href="/voters"
+              className="rounded-lg border border-rule bg-white px-4 py-2 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone"
+            >
+              Voters
+            </Link>
+            <Link
+              href="/walk-lists/new"
+              className="rounded-lg bg-gold px-4 py-2 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-gold-hover"
+            >
+              New walk list
+            </Link>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Link
-            href="/voters"
-            className="rounded-md border border-zinc-700 px-4 py-2 text-sm hover:bg-zinc-800"
-          >
-            Voters
-          </Link>
-          <Link
-            href="/walk-lists/new"
-            className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-white"
-          >
-            New walk list
-          </Link>
-        </div>
-      </div>
 
-      {error ? (
-        <p className="text-red-400">{error.message}</p>
-      ) : (
-        <div className="overflow-x-auto rounded-lg border border-zinc-800">
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-900 text-left text-zinc-400">
-              <tr>
-                <th className="px-3 py-2 font-medium">Name</th>
-                <th className="px-3 py-2 font-medium">Assigned to</th>
-                <th className="px-3 py-2 font-medium">Stops</th>
-                <th className="px-3 py-2 font-medium">Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(lists ?? []).map((l) => (
-                <tr key={l.id} className="border-t border-zinc-800/60 hover:bg-zinc-900/50">
-                  <td className="px-3 py-2">
-                    <Link href={`/walk-lists/${l.id}`} className="text-zinc-100 underline-offset-2 hover:underline">
-                      {l.name}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">
-                    {l.profiles?.full_name ?? <span className="text-zinc-500">Unassigned</span>}
-                  </td>
-                  <td className="px-3 py-2">{l.walk_list_items?.[0]?.count ?? 0}</td>
-                  <td className="px-3 py-2 text-zinc-400">
-                    {new Date(l.created_at).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-              {(lists ?? []).length === 0 && (
+        {error ? (
+          <p className="text-red-600">{error.message}</p>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border border-rule bg-white">
+            <table className="w-full text-sm">
+              <thead className="text-left">
                 <tr>
-                  <td colSpan={4} className="px-3 py-8 text-center text-zinc-500">
-                    No walk lists yet.
-                  </td>
+                  <th className="border-b border-rule px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase">
+                    Name
+                  </th>
+                  <th className="border-b border-rule px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase">
+                    Assigned to
+                  </th>
+                  <th className="border-b border-rule px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase">
+                    Stops
+                  </th>
+                  <th className="border-b border-rule px-3 py-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase">
+                    Created
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {(lists ?? []).map((l) => (
+                  <tr key={l.id} className="border-t border-rule transition-colors duration-200 ease-out hover:bg-stone">
+                    <td className="px-3 py-2">
+                      <Link href={`/walk-lists/${l.id}`} className="text-navy underline-offset-2 hover:underline">
+                        {l.name}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2 text-ink">
+                      {l.profiles?.full_name ?? <span className="text-slate">Unassigned</span>}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-ink">{l.walk_list_items?.[0]?.count ?? 0}</td>
+                    <td className="px-3 py-2 text-slate">
+                      {new Date(l.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+                {(lists ?? []).length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-3 py-8 text-center text-slate">
+                      No walk lists yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
