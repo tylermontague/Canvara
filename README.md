@@ -7,20 +7,44 @@ Political canvassing intelligence platform. Three components:
 - `apps/console` — Next.js campaign console
 - `apps/worker` — pipeline worker (ASR → extraction → belief engine)
 
+Shared workspace packages: `packages/db` (Supabase clients + types),
+`packages/shared` (roles, SignalObject types), `packages/prompts` (versioned
+extraction prompts).
+
 See `BUILD_PLAN.md` for architecture decisions, milestones, and the full plan.
 Requirements: `Canvara_Master_Requirements.docx` (in the Canvara Claude project).
 
-## M0 Kickoff (first session on PC)
+## Setup
 
-1. Clone this repo; run `npm install` (workspace root).
-2. Create Supabase project (if not done) and copy credentials into `.env` (see `.env.example`).
-3. Apply the schema: paste `supabase/migrations/00000000000001_schema_v1.sql` into the Supabase SQL Editor, or use `supabase db push` with the CLI.
-4. Seed two test campaigns and verify RLS isolation (M0 exit test):
-   a user in campaign A must not be able to read any row from campaign B.
-5. Scaffold apps with current tooling (do this fresh in Claude Code rather than committing stale boilerplate):
-   - `apps/console`: `npx create-next-app@latest`
-   - `apps/field`: `npx create-expo-app@latest`
-   - `apps/worker`: plain TypeScript service (`tsx`, one queue consumer)
+1. `npm install` at the repo root (npm workspaces).
+2. Copy `.env.example` to `.env` at the repo root and fill in the Supabase
+   credentials (dashboard → Settings → API). Never commit `.env`.
+3. The schema (`supabase/migrations/00000000000001_schema_v1.sql`) must be
+   applied to the Supabase project (SQL Editor or `supabase db push`).
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev:console` | Next.js console at localhost:3000 |
+| `npm run dev:field` | Expo dev server for the field app |
+| `npm run dev:worker` | Pipeline worker (stub until M3) |
+| `npm run typecheck` | Typecheck every workspace |
+| `npm run gen:types` | Regenerate `packages/db/src/types.ts` from the live DB (needs `SUPABASE_DB_URL`) |
+| `npm run seed:m0` | Seed two test campaigns + one user each (idempotent) |
+| `npm run test:m0` | M0 exit test: prove cross-campaign RLS isolation |
+
+## M0 exit test
+
+`seed:m0` creates Campaign A and Campaign B, one user in each, and rows in
+`voters`, `conversations`, and `signals` for both. `test:m0` then signs in as
+each user and proves (against service-role ground truth) that:
+
+- unfiltered SELECTs return only own-campaign rows,
+- SELECTs filtered to the other campaign return zero rows,
+- direct fetches of known other-campaign row ids return nothing,
+- cross-campaign INSERT is rejected, UPDATE/DELETE touch zero rows,
+- an unauthenticated client reads nothing at all.
 
 ## Model strategy
 

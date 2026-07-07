@@ -1,8 +1,13 @@
 {
   "name": "canvara",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
-  "engines": { "node": ">=20" },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev:console": "npm run dev --workspace @canvara/console",
     "dev:field": "npm run start --workspace @canvara/field",
@@ -13,7 +18,9 @@
     "test:m0": "node --import tsx --test tests/m0/isolation.test.ts"
   },
   "devDependencies": {
+    "@types/node": "^26.1.0",
+    "dotenv": "^17.2.3",
     "tsx": "^4.20.6",
-    "dotenv": "^17.2.3"
+    "typescript": "^6.0.3"
   }
 }
