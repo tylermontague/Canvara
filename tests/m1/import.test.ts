@@ -100,7 +100,20 @@ before(async () => {
     const CHUNK = 150; // keep the .in() querystring well under URL limits
     for (let i = 0; i < ids.length; i += CHUNK) {
       const chunk = ids.slice(i, i + CHUNK);
-      // signals cascade from conversations
+      // review_queue does not cascade from conversations — clear it first;
+      // signals do cascade.
+      const { data: convos } = await service
+        .from("conversations")
+        .select("id")
+        .in("voter_id", chunk);
+      const convoIds = (convos ?? []).map((c) => c.id);
+      if (convoIds.length > 0) {
+        const { error: rqErr } = await service
+          .from("review_queue")
+          .delete()
+          .in("conversation_id", convoIds);
+        if (rqErr) throw new Error(`teardown review_queue: ${rqErr.message}`);
+      }
       const { error: convErr } = await service
         .from("conversations")
         .delete()

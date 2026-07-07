@@ -12,3 +12,8 @@ supabase/.temp/
 # Local voter file samples — legally restricted use, never commit
 voter_file_sample.csv
 *.voterfile.csv
+
+# Generated test fixtures (reproducible via npm run gen:m3-audio)
+tests/m3/fixtures/audio.wav
+tests/m3/fixtures/reference.txt
+tests/m3/fixtures/.tmp/

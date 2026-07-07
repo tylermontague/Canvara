@@ -148,8 +148,16 @@ before(async () => {
   canvasserId = await ensureCanvasser(service, campaignA);
 
   // Teardown previous M2 runs: the canvasser is test-only, so all of their
-  // conversations are ours to remove, and campaign A's storage folder is
-  // swept entirely (earlier teardowns may have orphaned audio objects).
+  // conversations are ours to remove (review_queue first — no cascade), and
+  // campaign A's storage folder is swept entirely.
+  const { data: oldConvos } = await service
+    .from("conversations")
+    .select("id")
+    .eq("canvasser_id", canvasserId);
+  const oldConvoIds = (oldConvos ?? []).map((c) => c.id);
+  if (oldConvoIds.length > 0) {
+    await service.from("review_queue").delete().in("conversation_id", oldConvoIds);
+  }
   await service.from("conversations").delete().eq("canvasser_id", canvasserId);
   const { data: oldObjects } = await service.storage.from("conversations").list(campaignA);
   if (oldObjects && oldObjects.length > 0) {

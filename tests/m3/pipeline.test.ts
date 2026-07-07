@@ -34,7 +34,12 @@ import { SCRIPTED_TRANSCRIPT, GARBLED_TRANSCRIPT } from "./fixtures";
 
 const TEN_MINUTES_MS = 10 * 60 * 1000;
 const here = path.dirname(fileURLToPath(import.meta.url));
-const AUDIO_FIXTURE = path.join(here, "fixtures", "audio.m4a");
+// Generate with `npm run gen:m3-audio` (Kokoro TTS), or drop in a real
+// phone recording as audio.m4a.
+const AUDIO_FIXTURES = [
+  { file: path.join(here, "fixtures", "audio.wav"), contentType: "audio/wav" },
+  { file: path.join(here, "fixtures", "audio.m4a"), contentType: "audio/mp4" },
+];
 const REFERENCE_FIXTURE = path.join(here, "fixtures", "reference.txt");
 
 const { url, serviceRoleKey } = supabaseEnv();
@@ -253,19 +258,20 @@ test("idempotency: re-processing produces no duplicate signals or review entries
 });
 
 test("ASR + WER spot check (requires fixture audio)", async (t) => {
-  if (!existsSync(AUDIO_FIXTURE) || !existsSync(REFERENCE_FIXTURE)) {
-    t.skip("no fixture audio — drop tests/m3/fixtures/audio.m4a + reference.txt to enable");
+  const fixture = AUDIO_FIXTURES.find((f) => existsSync(f.file));
+  if (!fixture || !existsSync(REFERENCE_FIXTURE)) {
+    t.skip("no fixture audio — run `npm run gen:m3-audio` to create it");
     return;
   }
 
-  const audio = readFileSync(AUDIO_FIXTURE);
+  const audio = readFileSync(fixture.file);
   const reference = readFileSync(REFERENCE_FIXTURE, "utf8");
 
   const convoId = randomUUID();
   const audioPath = `${campaignA}/${convoId}.m4a`;
   const { error: uploadErr } = await service.storage
     .from("conversations")
-    .upload(audioPath, audio, { contentType: "audio/mp4", upsert: true });
+    .upload(audioPath, audio, { contentType: fixture.contentType, upsert: true });
   assert.ifError(uploadErr as Error | null);
 
   const { error } = await service.from("conversations").insert({

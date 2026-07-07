@@ -18,7 +18,8 @@
     "test:m0": "node --import tsx --test tests/m0/isolation.test.ts",
     "test:m1": "node --import tsx --test tests/m1/import.test.ts",
     "test:m2": "node --import tsx --test tests/m2/sync.test.ts",
-    "test:m3": "node --import tsx --test tests/m3/wer.test.ts tests/m3/pipeline.test.ts"
+    "test:m3": "node --import tsx --test tests/m3/wer.test.ts tests/m3/pipeline.test.ts",
+    "gen:m3-audio": "tsx scripts/gen-m3-audio.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
