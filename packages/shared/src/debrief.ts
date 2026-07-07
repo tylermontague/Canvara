@@ -134,7 +134,7 @@ export async function resolveReview(db: DbClient, input: ReviewResolutionInput):
     corrections: entries,
   };
 
-  const { error: resolveErr } = await db
+  const { data: resolved, error: resolveErr } = await db
     .from("review_queue")
     .update({
       status: "resolved",
@@ -142,8 +142,12 @@ export async function resolveReview(db: DbClient, input: ReviewResolutionInput):
       resolution: resolution as unknown as Json,
     })
     .eq("id", input.reviewId)
-    .eq("status", "open");
+    .eq("status", "open")
+    .select("id");
   if (resolveErr) throw new Error(`resolve review: ${resolveErr.message}`);
+  if (!resolved || resolved.length === 0) {
+    throw new Error("review item is not open — already resolved by someone else?");
+  }
 
   const { error: statusErr } = await db
     .from("conversations")

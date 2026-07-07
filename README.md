@@ -36,6 +36,7 @@ Requirements: `Canvara_Master_Requirements.docx` (in the Canvara Claude project)
 | `npm run test:m1` | M1 exit test: 5k-row voter file import + walk list build/assign |
 | `npm run test:m2` | M2 exit test: airplane-mode 5-door canvass syncs on reconnect |
 | `npm run test:m3` | M3 exit test: scripted conversation → correct signals on all 11 fields |
+| `npm run test:m4` | M4 exit test: debrief correction round-trips into signal + audit log |
 
 ## M0 exit test
 
