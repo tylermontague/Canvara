@@ -12,6 +12,10 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/papaparse": "^5.5.2",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "papaparse": "^5.5.4"
   }
 }
