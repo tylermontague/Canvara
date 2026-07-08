@@ -10,7 +10,12 @@ import {
 import * as Location from "expo-location";
 import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
-import type { QueuedCapture } from "@canvara/shared";
+import {
+  INTENTION_LABELS,
+  INTENTION_OPTIONS,
+  RANK_TOP_N,
+  type QueuedCapture,
+} from "@canvara/shared";
 import { useSession } from "@/lib/session";
 import {
   getCachedStop,
@@ -52,6 +57,22 @@ export default function StopScreen() {
   const questions = useMemo(() => getCachedSurveyQuestions(), []);
   const contactResultRef = useRef<string | null>(null);
   const [pollAnswers, setPollAnswers] = useState<Record<string, string>>({});
+  // Cold test (M11): intention + issue ranking captured in the first
+  // seconds of the conversation; intention is re-asked after (pre/post).
+  const intentionQ = useMemo(() => questions.find((q) => q.kind === "intention"), [questions]);
+  const rankQ = useMemo(() => questions.find((q) => q.kind === "rank"), [questions]);
+  const choiceQs = useMemo(() => questions.filter((q) => q.kind === "choice"), [questions]);
+  const [coldIntention, setColdIntention] = useState<string | null>(null);
+  const [coldRank, setColdRank] = useState<string[]>([]);
+  const [postIntention, setPostIntention] = useState<string | null>(null);
+
+  function toggleRankIssue(issue: string) {
+    setColdRank((prev) => {
+      if (prev.includes(issue)) return prev.filter((i) => i !== issue);
+      if (prev.length >= RANK_TOP_N) return prev;
+      return [...prev, issue];
+    });
+  }
 
   useEffect(() => {
     if (phase !== "recording") return;
@@ -109,11 +130,31 @@ export default function StopScreen() {
   /** Result tap → poll step when the campaign has questions, else save. */
   function handleContactResult(contactResult: string) {
     contactResultRef.current = contactResult;
-    if (questions.length > 0) {
+    // Post step exists when there are choice questions, or an intention
+    // cold answer to re-ask (the pre/post persuasion measurement).
+    if (choiceQs.length > 0 || (intentionQ && coldIntention !== null)) {
       setPhase("poll");
     } else {
       void saveCapture(contactResult);
     }
+  }
+
+  /** Assemble the pre/post/only survey rows for the capture queue. */
+  function collectSurveyResponses(): NonNullable<QueuedCapture["surveyResponses"]> {
+    const rows: NonNullable<QueuedCapture["surveyResponses"]> = [];
+    if (intentionQ && coldIntention) {
+      rows.push({ questionId: intentionQ.id, answer: coldIntention, phase: "pre" });
+    }
+    if (rankQ && coldRank.length > 0) {
+      rows.push({ questionId: rankQ.id, answerItems: coldRank, phase: "pre" });
+    }
+    if (intentionQ && postIntention) {
+      rows.push({ questionId: intentionQ.id, answer: postIntention, phase: "post" });
+    }
+    for (const [questionId, answer] of Object.entries(pollAnswers)) {
+      rows.push({ questionId, answer, phase: "only" });
+    }
+    return rows;
   }
 
   async function saveCapture(contactResult: string) {
@@ -150,10 +191,7 @@ export default function StopScreen() {
         consentDisclosedAt: consentAtRef.current,
         contactResult,
         stopStatus: "visited",
-        surveyResponses: Object.entries(pollAnswers).map(([questionId, answer]) => ({
-          questionId,
-          answer,
-        })),
+        surveyResponses: collectSurveyResponses(),
         attempts: 0,
         lastError: null,
       };
@@ -270,16 +308,72 @@ export default function StopScreen() {
       )}
 
       {phase === "recording" && (
-        <View style={styles.recordingWrap}>
-          <View style={styles.recordingDot} />
-          <Text style={styles.recordingTime}>
-            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-          </Text>
-          <Text style={styles.dim}>Recording — focus on the conversation.</Text>
-          <TouchableOpacity style={styles.stopButton} onPress={() => void stopRecording()}>
-            <Text style={styles.stopButtonText}>End conversation</Text>
-          </TouchableOpacity>
-        </View>
+        <>
+          {/* Cold test (M11): ten seconds at the top of the conversation.
+              The re-ask after the conversation measures what it moved. */}
+          {(intentionQ || rankQ) && (
+            <View style={styles.card}>
+              <Text style={styles.beliefsLabel}>COLD TEST — ASK FIRST</Text>
+              {intentionQ && (
+                <>
+                  <Text style={styles.pollQuestion}>{intentionQ.question}</Text>
+                  <View style={styles.chipRow}>
+                    {INTENTION_OPTIONS.map((option) => {
+                      const active = coldIntention === option;
+                      return (
+                        <TouchableOpacity
+                          key={option}
+                          style={[styles.chip, active && styles.chipOn]}
+                          onPress={() => setColdIntention(active ? null : option)}
+                        >
+                          <Text style={active ? styles.chipOnText : styles.chipText}>
+                            {INTENTION_LABELS[option]}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
+              {rankQ && (
+                <>
+                  <Text style={[styles.pollQuestion, intentionQ && { marginTop: 14 }]}>
+                    {rankQ.question}{" "}
+                    <Text style={styles.dimInline}>(tap top {RANK_TOP_N} in order)</Text>
+                  </Text>
+                  <View style={styles.chipRow}>
+                    {rankQ.options.map((issue) => {
+                      const rank = coldRank.indexOf(issue);
+                      const active = rank !== -1;
+                      return (
+                        <TouchableOpacity
+                          key={issue}
+                          style={[styles.chip, active && styles.chipOn]}
+                          onPress={() => toggleRankIssue(issue)}
+                        >
+                          <Text style={active ? styles.chipOnText : styles.chipText}>
+                            {active ? `${rank + 1}. ` : ""}
+                            {issue.replace(/_/g, " ")}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
+            </View>
+          )}
+          <View style={styles.recordingWrap}>
+            <View style={styles.recordingDot} />
+            <Text style={styles.recordingTime}>
+              {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+            </Text>
+            <Text style={styles.dim}>Recording — focus on the conversation.</Text>
+            <TouchableOpacity style={styles.stopButton} onPress={() => void stopRecording()}>
+              <Text style={styles.stopButtonText}>End conversation</Text>
+            </TouchableOpacity>
+          </View>
+        </>
       )}
 
       {phase === "result" && (
@@ -300,7 +394,30 @@ export default function StopScreen() {
       {phase === "poll" && (
         <View style={{ gap: 16 }}>
           <Text style={styles.sectionTitle}>Quick poll (optional)</Text>
-          {questions.map((q) => (
+          {/* Post re-ask (M11): only when a cold answer exists — the pair
+              is the persuasion measurement. */}
+          {intentionQ && coldIntention !== null && (
+            <View>
+              <Text style={styles.pollQuestion}>After the conversation — where are they now?</Text>
+              <View style={styles.chipRow}>
+                {INTENTION_OPTIONS.map((option) => {
+                  const active = postIntention === option;
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      style={[styles.chip, active && styles.chipOn]}
+                      onPress={() => setPostIntention(active ? null : option)}
+                    >
+                      <Text style={active ? styles.chipOnText : styles.chipText}>
+                        {INTENTION_LABELS[option]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+          {choiceQs.map((q) => (
             <View key={q.id}>
               <Text style={styles.pollQuestion}>{q.question}</Text>
               <View style={styles.chipRow}>
@@ -330,8 +447,8 @@ export default function StopScreen() {
             onPress={() => void saveCapture(contactResultRef.current ?? "answered")}
           >
             <Text style={styles.confirmText}>
-              {Object.keys(pollAnswers).length > 0
-                ? `Save with ${Object.keys(pollAnswers).length} answer${Object.keys(pollAnswers).length === 1 ? "" : "s"}`
+              {collectSurveyResponses().length > 0
+                ? `Save with ${collectSurveyResponses().length} answer${collectSurveyResponses().length === 1 ? "" : "s"}`
                 : "Skip poll & save"}
             </Text>
           </TouchableOpacity>
@@ -446,5 +563,6 @@ const styles = StyleSheet.create({
   },
   resultText: { color: colors.text, fontSize: 16, fontWeight: "600" },
   dim: { color: colors.dim, fontSize: 14, textAlign: "center" },
+  dimInline: { color: colors.faint, fontSize: 12, fontWeight: "400" },
   error: { color: colors.red, fontSize: 14 },
 });

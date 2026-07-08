@@ -79,11 +79,13 @@ const ports: SyncPorts = {
       question_id: r.questionId,
       conversation_id: capture.id,
       voter_id: capture.voterId,
-      answer: r.answer,
+      answer: r.answer ?? null,
+      answer_items: r.answerItems ?? null,
+      phase: r.phase ?? "only",
     }));
     const { error } = await supabase
       .from("survey_responses")
-      .upsert(rows, { onConflict: "question_id,conversation_id" });
+      .upsert(rows, { onConflict: "question_id,conversation_id,phase" });
     if (error) throw new Error(`survey responses: ${error.message}`);
   },
   async deleteLocalAudio(uri) {
@@ -214,7 +216,7 @@ export async function syncDown(profile: Profile): Promise<{ lists: number; stops
   try {
     const { data: questions } = await supabase
       .from("survey_questions")
-      .select("id, question, options, position")
+      .select("id, question, options, kind, position")
       .eq("active", true)
       .order("position");
     replaceSurveyCache(questions ?? []);

@@ -62,7 +62,7 @@ export default async function AdminPage() {
       .then((r) => r.data ?? []),
     supabase
       .from("survey_questions")
-      .select("id, question, options, active, position")
+      .select("id, question, options, kind, active, position")
       .order("position", { ascending: true })
       .then((r) => r.data ?? []),
   ]);

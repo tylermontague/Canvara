@@ -30,8 +30,18 @@ export interface QueuedCapture {
   contactResult: string | null;
   /** walk_list_items.status to record for this stop, if any. */
   stopStatus: string | null;
-  /** Door-poll answers collected at the door (M6.5), synced with the capture. */
-  surveyResponses?: { questionId: string; answer: string }[];
+  /**
+   * Door-poll answers collected at the door (M6.5), synced with the
+   * capture. M11 adds the pre/post protocol: 'pre' = cold test before the
+   * conversation, 'post' = re-ask after, 'only' (default) = single-ask.
+   * Rank questions carry answerItems (ordered issue ids) instead of answer.
+   */
+  surveyResponses?: {
+    questionId: string;
+    answer?: string;
+    answerItems?: string[];
+    phase?: "pre" | "post" | "only";
+  }[];
   attempts: number;
   lastError: string | null;
 }

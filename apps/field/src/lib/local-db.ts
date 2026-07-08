@@ -38,6 +38,14 @@ db.execSync(`
   );
 `);
 
+// M11: question kinds (choice / intention / rank). ALTER fails once the
+// column exists — devices that predate M11 gain it here.
+try {
+  db.execSync("ALTER TABLE survey_cache ADD COLUMN kind TEXT NOT NULL DEFAULT 'choice'");
+} catch {
+  // column already present
+}
+
 // ---------- Capture queue (QueueStore implementation) ----------
 
 export const sqliteQueueStore: QueueStore = {
@@ -187,26 +195,35 @@ export interface CachedSurveyQuestion {
   id: string;
   question: string;
   options: string[];
+  kind: "choice" | "intention" | "rank";
   position: number;
 }
 
-export function replaceSurveyCache(questions: CachedSurveyQuestion[]): void {
+export function replaceSurveyCache(
+  questions: (Omit<CachedSurveyQuestion, "kind"> & { kind: string })[],
+): void {
   db.withTransactionSync(() => {
     db.runSync("DELETE FROM survey_cache");
     for (const q of questions) {
-      db.runSync("INSERT INTO survey_cache (id, question, options, position) VALUES (?, ?, ?, ?)", [
-        q.id,
-        q.question,
-        JSON.stringify(q.options),
-        q.position,
-      ]);
+      db.runSync(
+        "INSERT INTO survey_cache (id, question, options, kind, position) VALUES (?, ?, ?, ?, ?)",
+        [q.id, q.question, JSON.stringify(q.options), q.kind, q.position],
+      );
     }
   });
 }
 
 export function getCachedSurveyQuestions(): CachedSurveyQuestion[] {
-  const rows = db.getAllSync<{ id: string; question: string; options: string; position: number }>(
-    "SELECT * FROM survey_cache ORDER BY position",
-  );
-  return rows.map((r) => ({ ...r, options: JSON.parse(r.options) as string[] }));
+  const rows = db.getAllSync<{
+    id: string;
+    question: string;
+    options: string;
+    kind: string;
+    position: number;
+  }>("SELECT * FROM survey_cache ORDER BY position");
+  return rows.map((r) => ({
+    ...r,
+    kind: (r.kind === "intention" || r.kind === "rank" ? r.kind : "choice") as CachedSurveyQuestion["kind"],
+    options: JSON.parse(r.options) as string[],
+  }));
 }

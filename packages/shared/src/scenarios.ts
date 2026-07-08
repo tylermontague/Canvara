@@ -85,7 +85,7 @@ interface PartitionVoter extends VoterDemographics {
   vote_history: unknown;
 }
 
-interface Partition {
+export interface DimensionPartition {
   dimension: { key: string; label: string };
   voters: PartitionVoter[];
   /** voter id → segment key ("unknown" when the attribute is missing). */
@@ -94,7 +94,11 @@ interface Partition {
   segments: { key: string; label: string }[];
 }
 
-async function fetchPartition(db: DbClient, dimensionKey: string): Promise<Partition> {
+/** Partition the electorate along one dimension (also used by polling.ts). */
+export async function fetchPartition(
+  db: DbClient,
+  dimensionKey: string,
+): Promise<DimensionPartition> {
   const cohortDim = COHORT_DIMENSIONS.find((d) => d.key === dimensionKey);
   const regionalDim = REGIONAL_DIMENSIONS.find((d) => d.key === dimensionKey);
   if (!cohortDim && !regionalDim) {
@@ -293,13 +297,17 @@ export async function fetchSurveyBreakouts(
 ): Promise<SurveyBreakout[]> {
   const partition = await fetchPartition(db, dimensionKey);
 
+  // Classic fixed-choice questions only: intention questions live in the
+  // persuasion-delta table and rank questions in the stated-priorities
+  // table (M11) — mixing their phased/ordered rows here would double-count.
   const { data: questions, error: qErr } = await db
     .from("survey_questions")
     .select("id, question, options, position")
+    .eq("kind", "choice")
     .order("position");
   if (qErr) throw new Error(`survey questions: ${qErr.message}`);
 
-  const responses: { question_id: string; voter_id: string | null; answer: string }[] = [];
+  const responses: { question_id: string; voter_id: string | null; answer: string | null }[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await db
       .from("survey_responses")
@@ -314,7 +322,9 @@ export async function fetchSurveyBreakouts(
     const bySegment: Record<string, Record<string, number>> = {};
     let total = 0;
     for (const r of responses) {
-      if (r.question_id !== q.id || !r.voter_id) continue;
+      // Rank responses carry answer_items instead of answer (M11) — the
+      // rank standing table owns those; breakouts count choice answers.
+      if (r.question_id !== q.id || !r.voter_id || r.answer === null) continue;
       const segment = partition.segmentOf.get(r.voter_id);
       if (!segment) continue;
       const answers = (bySegment[segment] ??= {});

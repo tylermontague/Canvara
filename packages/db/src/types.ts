@@ -679,6 +679,7 @@ export type Database = {
           campaign_id: string;
           question: string;
           options: string[];
+          kind: string;
           active: boolean;
           position: number;
           created_at: string;
@@ -688,6 +689,7 @@ export type Database = {
           campaign_id: string;
           question: string;
           options: string[];
+          kind?: string;
           active?: boolean;
           position?: number;
           created_at?: string;
@@ -697,6 +699,7 @@ export type Database = {
           campaign_id?: string;
           question?: string;
           options?: string[];
+          kind?: string;
           active?: boolean;
           position?: number;
           created_at?: string;
@@ -710,7 +713,9 @@ export type Database = {
           question_id: string;
           conversation_id: string;
           voter_id: string | null;
-          answer: string;
+          answer: string | null;
+          answer_items: string[] | null;
+          phase: string;
           created_at: string;
         };
         Insert: {
@@ -719,7 +724,9 @@ export type Database = {
           question_id: string;
           conversation_id: string;
           voter_id?: string | null;
-          answer: string;
+          answer?: string | null;
+          answer_items?: string[] | null;
+          phase?: string;
           created_at?: string;
         };
         Update: {
@@ -728,7 +735,9 @@ export type Database = {
           question_id?: string;
           conversation_id?: string;
           voter_id?: string | null;
-          answer?: string;
+          answer?: string | null;
+          answer_items?: string[] | null;
+          phase?: string;
           created_at?: string;
         };
         Relationships: [

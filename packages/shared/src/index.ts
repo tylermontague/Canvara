@@ -32,3 +32,4 @@ export * from "./persuasion";
 export * from "./district";
 export * from "./scenarios";
 export * from "./geocode";
+export * from "./polling";

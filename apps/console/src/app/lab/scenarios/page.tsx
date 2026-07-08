@@ -5,7 +5,10 @@ import { AppHeader } from "@/components/app-header";
 import {
   fetchStanding,
   fetchSurveyBreakouts,
+  fetchPersuasionDelta,
+  fetchRankStanding,
   STANDING_DIMENSIONS,
+  RANK_TOP_N,
   type ScenarioAssumptions,
 } from "@canvara/shared";
 import { Simulator, type ScenarioSegmentSeed, type SavedScenarioRow } from "./simulator";
@@ -35,14 +38,28 @@ export default async function ScenariosPage({
   const dimension =
     params.dimension && DIMENSION_KEYS.has(params.dimension) ? params.dimension : "party";
 
-  const [standing, breakouts, scenariosRes] = await Promise.all([
-    fetchStanding(supabase, dimension, 2026),
-    fetchSurveyBreakouts(supabase, dimension),
-    supabase
-      .from("scenarios")
-      .select("id, name, dimension, assumptions, notes, created_at")
-      .order("created_at", { ascending: false }),
-  ]);
+  const [standing, breakouts, scenariosRes, persuasionDeltas, rankQuestionsRes] =
+    await Promise.all([
+      fetchStanding(supabase, dimension, 2026),
+      fetchSurveyBreakouts(supabase, dimension),
+      supabase
+        .from("scenarios")
+        .select("id, name, dimension, assumptions, notes, created_at")
+        .order("created_at", { ascending: false }),
+      fetchPersuasionDelta(supabase, dimension),
+      supabase
+        .from("survey_questions")
+        .select("id, question")
+        .eq("kind", "rank")
+        .eq("active", true)
+        .order("position", { ascending: true })
+        .limit(1),
+    ]);
+
+  const rankQuestion = rankQuestionsRes.data?.[0] ?? null;
+  const rankStanding = rankQuestion
+    ? await fetchRankStanding(supabase, rankQuestion.id, dimension)
+    : null;
 
   const savedScenarios: SavedScenarioRow[] = (scenariosRes.data ?? []).map((row) => ({
     id: row.id,
@@ -206,6 +223,123 @@ export default async function ScenariosPage({
               </tbody>
             </table>
           </div>
+        </section>
+
+        {/* Door movement */}
+        <section className="mb-6 rounded-xl border border-rule bg-white p-5">
+          <h2 className="mb-3 font-serif text-lg font-bold text-navy">Door movement</h2>
+          {persuasionDeltas.every((d) => d.pairs === 0) ? (
+            <p className="text-sm text-slate">
+              No pre/post cold tests yet — add a cold-test question in{" "}
+              <Link href="/admin" className="text-navy underline-offset-2 hover:underline">
+                Admin
+              </Link>{" "}
+              and canvassers will start measuring movement.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left">
+                  <tr>
+                    {[
+                      "Segment",
+                      "Conversations measured (pairs)",
+                      "Moved toward us",
+                      "Moved away",
+                      "Held",
+                      "Net movement",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="border-b border-rule px-2 py-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {persuasionDeltas.map((d) => (
+                    <tr key={d.segment} className="border-t border-rule align-top">
+                      <td className="px-2 py-3 text-ink">{d.label}</td>
+                      <td className="px-2 py-3 font-mono text-ink">{d.pairs}</td>
+                      <td className="px-2 py-3 font-mono text-ink">{d.movedToward}</td>
+                      <td className="px-2 py-3 font-mono text-ink">{d.movedAway}</td>
+                      <td className="px-2 py-3 font-mono text-ink">{d.held}</td>
+                      <td className="px-2 py-3">
+                        {d.insufficientSample || d.netMovementPct === null ? (
+                          <span className="text-xs text-slate">
+                            n={d.pairs} — too few pairs
+                          </span>
+                        ) : (
+                          <span className="font-mono text-ink">
+                            {d.netMovementPct >= 0 ? "+" : ""}
+                            {d.netMovementPct.toFixed(1)}%
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {/* Stated issue priorities */}
+        <section className="mb-6 rounded-xl border border-rule bg-white p-5">
+          <h2 className="mb-3 font-serif text-lg font-bold text-navy">
+            Stated issue priorities
+          </h2>
+          {!rankQuestion || !rankStanding ? (
+            <p className="text-sm text-slate">
+              No active issue-rank question yet — add one in{" "}
+              <Link href="/admin" className="text-navy underline-offset-2 hover:underline">
+                Admin
+              </Link>
+              .
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <p className="mb-2 text-xs text-slate">{rankQuestion.question}</p>
+              <table className="w-full text-sm">
+                <thead className="text-left">
+                  <tr>
+                    {["Segment", "n", "Top issues"].map((h) => (
+                      <th
+                        key={h}
+                        className="border-b border-rule px-2 py-2 text-[11px] font-medium tracking-[0.08em] text-slate uppercase"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rankStanding.map((r) => (
+                    <tr key={r.segment} className="border-t border-rule align-top">
+                      <td className="px-2 py-3 text-ink">{r.label}</td>
+                      <td className="px-2 py-3 font-mono text-ink">{r.responses}</td>
+                      <td className="px-2 py-3">
+                        {r.insufficientSample ? (
+                          <span className="text-xs text-slate">
+                            n={r.responses} — too few reads
+                          </span>
+                        ) : (
+                          <span className="text-ink">
+                            {r.order
+                              .slice(0, RANK_TOP_N)
+                              .map((issue, i) => `${i + 1}. ${issue.replace(/_/g, " ")}`)
+                              .join("  ")}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         {/* What-if simulator */}

@@ -44,6 +44,7 @@ Requirements: `Canvara_Master_Requirements.docx` (in the Canvara Claude project)
 | `npm run test:m8` | M8 exit test: district map, turnout math, contact coverage, signs/events |
 | `npm run test:m9` | M9 exit test: standing by dimension, what-if projection + inverse solvers |
 | `npm run test:m10` | M10 exit test: Census geocoding sweep — real addresses become map dots |
+| `npm run test:m11` | M11 exit test: cold-test protocol, issue rankings, pre/post persuasion delta |
 
 ## M0 exit test
 

@@ -371,15 +371,19 @@ test("door poll answers queue offline and sync idempotently", async () => {
     },
     updateStopStatus: async () => {},
     saveSurveyResponses: async (c) => {
+      // M11: responses are keyed per phase (pre/post/only) — same upsert
+      // the device now performs (apps/field/src/lib/sync.ts).
       const { error } = await canvasser.from("survey_responses").upsert(
         (c.surveyResponses ?? []).map((r) => ({
           campaign_id: c.campaignId,
           question_id: r.questionId,
           conversation_id: c.id,
           voter_id: c.voterId,
-          answer: r.answer,
+          answer: r.answer ?? null,
+          answer_items: r.answerItems ?? null,
+          phase: r.phase ?? "only",
         })),
-        { onConflict: "question_id,conversation_id" },
+        { onConflict: "question_id,conversation_id,phase" },
       );
       if (error) throw new Error(error.message);
     },
