@@ -26,6 +26,11 @@ const MODULES: { label: string; href?: string; description: string }[] = [
     description: "Ambient Pulse, issue salience, and the review queue.",
   },
   {
+    label: "Scenarios",
+    href: "/lab/scenarios",
+    description: "Standing by cohort and the what-if electorate simulator.",
+  },
+  {
     label: "Message Lab",
     href: "/message-lab",
     description: "Cohort and individually tailored messages, guardrail-checked.",

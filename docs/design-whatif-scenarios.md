@@ -59,12 +59,17 @@ Two additions to the Voter Intelligence Lab:
   simulator with sliders + saved scenarios
 - Regional: standing by precinct (map choropleth later; table first)
 
-## Open questions for tomorrow
+## Decisions (2026-07-08, built as M9)
 
-1. Win number: total expected votes cast comes from the scenario's own
-   turnout assumptions, or anchor to a user-entered expected-electorate
-   estimate?
-2. Where do external poll numbers (docs/polling-sources.md) enter — manual
-   entry per segment as a "poll prior" column beside our door data?
-3. Does "how are we doing" live on /lab or its own /lab/standing page?
-   (/lab is getting heavy — likely split.)
+1. Win number: BOTH — derived from the scenario's own turnout assumptions
+   by default, with an optional user-entered expected-electorate override
+   that anchors the win bar and the opponent's pool.
+2. External poll numbers: manual entry per segment — a "poll prior" column
+   beside our door data (poll_priors table, one current prior per
+   campaign/dimension/segment; re-entry replaces).
+3. Placement: new /lab/scenarios page holding both the standing tables and
+   the simulator, linked from /lab and the app header.
+
+Implementation: packages/shared/src/scenarios.ts (standing fetch, pure
+projection math, inverse solvers), migration 10 (scenarios + poll_priors),
+tests/m9/scenarios.test.ts, console app/lab/scenarios/.

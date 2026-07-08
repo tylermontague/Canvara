@@ -93,6 +93,12 @@ export default async function LabPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link
+              href="/lab/scenarios"
+              className="rounded-lg border border-rule bg-white px-4 py-2 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone"
+            >
+              Scenarios →
+            </Link>
+            <Link
               href="/lab/cohorts"
               className="rounded-lg border border-rule bg-white px-4 py-2 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone"
             >
