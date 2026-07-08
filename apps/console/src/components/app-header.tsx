@@ -16,7 +16,7 @@ const ROLE_LABELS: Record<Role, string> = {
 const MODULES: { label: string; href?: string }[] = [
   { label: "Field Office", href: "/voters" },
   { label: "Voter Intelligence Lab", href: "/lab" },
-  { label: "Message Lab" },
+  { label: "Message Lab", href: "/message-lab" },
   { label: "Voter Contact Workshop" },
   { label: "Admin", href: "/admin" },
 ];

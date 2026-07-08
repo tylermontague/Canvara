@@ -25,7 +25,11 @@ const MODULES: { label: string; href?: string; description: string }[] = [
     href: "/lab",
     description: "Ambient Pulse, issue salience, and the review queue.",
   },
-  { label: "Message Lab", description: "Coming in a later milestone." },
+  {
+    label: "Message Lab",
+    href: "/message-lab",
+    description: "Cohort and individually tailored messages, guardrail-checked.",
+  },
   {
     label: "Voter Contact Workshop",
     description: "Coming in a later milestone.",

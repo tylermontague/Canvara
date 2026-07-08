@@ -762,6 +762,90 @@ export type Database = {
         };
         Relationships: [];
       };
+      messages: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          kind: string;
+          cohort_id: string | null;
+          voter_id: string | null;
+          issue_id: string | null;
+          goal: string;
+          title: string;
+          body: string;
+          rationale: string | null;
+          evidence: Json;
+          guardrail: Json | null;
+          guardrail_verdict: string | null;
+          status: string;
+          model_used: string;
+          prompt_version: string;
+          created_by: string | null;
+          approved_by: string | null;
+          approved_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          kind: string;
+          cohort_id?: string | null;
+          voter_id?: string | null;
+          issue_id?: string | null;
+          goal: string;
+          title: string;
+          body: string;
+          rationale?: string | null;
+          evidence?: Json;
+          guardrail?: Json | null;
+          guardrail_verdict?: string | null;
+          status?: string;
+          model_used: string;
+          prompt_version: string;
+          created_by?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          kind?: string;
+          cohort_id?: string | null;
+          voter_id?: string | null;
+          issue_id?: string | null;
+          goal?: string;
+          title?: string;
+          body?: string;
+          rationale?: string | null;
+          evidence?: Json;
+          guardrail?: Json | null;
+          guardrail_verdict?: string | null;
+          status?: string;
+          model_used?: string;
+          prompt_version?: string;
+          created_by?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "messages_cohort_id_fkey";
+            columns: ["cohort_id"];
+            isOneToOne: false;
+            referencedRelation: "cohorts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "messages_voter_id_fkey";
+            columns: ["voter_id"];
+            isOneToOne: false;
+            referencedRelation: "voters";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       cohort_issue_priors: {
         Row: {
           id: string;

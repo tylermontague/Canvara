@@ -116,7 +116,10 @@ before(async () => {
       await service.from("conversations").delete().in("id", convoIds);
     }
     await service.from("belief_states").delete().in("voter_id", oldIds);
-    await service.from("voters").delete().in("id", oldIds);
+    // Message Lab drafts (M7) reference voters — clear them first.
+    await service.from("messages").delete().in("voter_id", oldIds);
+    const { error: voterErr } = await service.from("voters").delete().in("id", oldIds);
+    if (voterErr) throw new Error(`teardown M65 voters: ${voterErr.message}`);
   }
   await service.from("survey_questions").delete().eq("campaign_id", campaignA).like("question", "M65%");
   await service.from("cohorts").delete().eq("campaign_id", campaignA).like("name", "M65%");

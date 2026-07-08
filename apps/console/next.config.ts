@@ -17,7 +17,7 @@ if (anonKey) publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY = anonKey;
 const nextConfig: NextConfig = {
   env: publicEnv,
   // Workspace packages ship raw TypeScript; Next compiles them.
-  transpilePackages: ["@canvara/db", "@canvara/shared"],
+  transpilePackages: ["@canvara/db", "@canvara/shared", "@canvara/messaging", "@canvara/prompts"],
 };
 
 export default nextConfig;

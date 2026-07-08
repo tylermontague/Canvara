@@ -23,7 +23,8 @@
     "test:m4": "node --import tsx --test tests/m4/debrief.test.ts",
     "test:m5": "node --import tsx --test tests/m5/pulse.test.ts",
     "test:m6": "node --import tsx --test tests/m6/hardening.test.ts",
-    "test:m65": "node --import tsx --test tests/m65/persuasion.test.ts"
+    "test:m65": "node --import tsx --test tests/m65/persuasion.test.ts",
+    "test:m7": "node --import tsx --test tests/m7/message-lab.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",
