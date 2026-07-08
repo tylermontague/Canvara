@@ -22,3 +22,11 @@ export {
   MESSAGE_INDIVIDUAL_VERSION,
   GUARDRAIL_VERSION,
 } from "./messages";
+export {
+  pollQuestionsPrompt,
+  sparksPrompt,
+  neutralityGuardrailPrompt,
+  POLL_QUESTIONS_VERSION,
+  SPARKS_VERSION,
+  NEUTRALITY_GUARDRAIL_VERSION,
+} from "./workshop";

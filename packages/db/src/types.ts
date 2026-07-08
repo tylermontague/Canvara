@@ -957,6 +957,141 @@ export type Database = {
         };
         Relationships: [];
       };
+      question_drafts: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          question: string;
+          options: string[];
+          rationale: string | null;
+          evidence: Json;
+          guardrail: Json | null;
+          guardrail_verdict: string | null;
+          status: string;
+          model_used: string;
+          prompt_version: string;
+          created_by: string | null;
+          approved_by: string | null;
+          approved_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          question: string;
+          options: string[];
+          rationale?: string | null;
+          evidence?: Json;
+          guardrail?: Json | null;
+          guardrail_verdict?: string | null;
+          status?: string;
+          model_used: string;
+          prompt_version: string;
+          created_by?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          question?: string;
+          options?: string[];
+          rationale?: string | null;
+          evidence?: Json;
+          guardrail?: Json | null;
+          guardrail_verdict?: string | null;
+          status?: string;
+          model_used?: string;
+          prompt_version?: string;
+          created_by?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      sparks: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          cohort_id: string | null;
+          title: string;
+          opener: string;
+          why: string | null;
+          evidence: Json;
+          guardrail: Json | null;
+          guardrail_verdict: string | null;
+          status: string;
+          model_used: string;
+          prompt_version: string;
+          created_by: string | null;
+          approved_by: string | null;
+          approved_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          cohort_id?: string | null;
+          title: string;
+          opener: string;
+          why?: string | null;
+          evidence?: Json;
+          guardrail?: Json | null;
+          guardrail_verdict?: string | null;
+          status?: string;
+          model_used: string;
+          prompt_version: string;
+          created_by?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          cohort_id?: string | null;
+          title?: string;
+          opener?: string;
+          why?: string | null;
+          evidence?: Json;
+          guardrail?: Json | null;
+          guardrail_verdict?: string | null;
+          status?: string;
+          model_used?: string;
+          prompt_version?: string;
+          created_by?: string | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      spark_usages: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          spark_id: string;
+          conversation_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          spark_id: string;
+          conversation_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          spark_id?: string;
+          conversation_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       messages: {
         Row: {
           id: string;

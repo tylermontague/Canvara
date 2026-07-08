@@ -18,6 +18,7 @@ import {
 } from "@canvara/shared";
 import { useSession } from "@/lib/session";
 import {
+  getCachedSparks,
   getCachedStop,
   getCachedSurveyQuestions,
   setCachedStopStatus,
@@ -65,6 +66,10 @@ export default function StopScreen() {
   const [coldIntention, setColdIntention] = useState<string | null>(null);
   const [coldRank, setColdRank] = useState<string[]>([]);
   const [postIntention, setPostIntention] = useState<string | null>(null);
+  // Sparks (M12): approved openers on the briefing; the canvasser taps
+  // which one(s) they used so topics earn per-spark movement scores.
+  const sparks = useMemo(() => getCachedSparks(), []);
+  const [usedSparkIds, setUsedSparkIds] = useState<string[]>([]);
 
   function toggleRankIssue(issue: string) {
     setColdRank((prev) => {
@@ -192,6 +197,7 @@ export default function StopScreen() {
         contactResult,
         stopStatus: "visited",
         surveyResponses: collectSurveyResponses(),
+        sparkIds: usedSparkIds,
         attempts: 0,
         lastError: null,
       };
@@ -283,6 +289,18 @@ export default function StopScreen() {
                 </View>
               ))}
             </View>
+          </View>
+        )}
+        {sparks.length > 0 && phase === "briefing" && (
+          <View style={styles.beliefs}>
+            <Text style={styles.beliefsLabel}>SPARKS — WAYS IN</Text>
+            {sparks.slice(0, 3).map((s) => (
+              <View key={s.id} style={{ marginBottom: 8 }}>
+                <Text style={styles.factValue}>{s.title}</Text>
+                <Text style={styles.connectionFact}>“{s.opener}”</Text>
+                {s.why && <Text style={styles.sparkWhy}>Why: {s.why}</Text>}
+              </View>
+            ))}
           </View>
         )}
       </View>
@@ -417,6 +435,31 @@ export default function StopScreen() {
               </View>
             </View>
           )}
+          {/* Spark attribution (M12): one tap ties this conversation's
+              movement to the topics that produced it. */}
+          {sparks.length > 0 && (
+            <View>
+              <Text style={styles.pollQuestion}>Which spark did you use?</Text>
+              <View style={styles.chipRow}>
+                {sparks.map((s) => {
+                  const active = usedSparkIds.includes(s.id);
+                  return (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={[styles.chip, active && styles.chipOn]}
+                      onPress={() =>
+                        setUsedSparkIds((prev) =>
+                          active ? prev.filter((id) => id !== s.id) : [...prev, s.id],
+                        )
+                      }
+                    >
+                      <Text style={active ? styles.chipOnText : styles.chipText}>{s.title}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
           {choiceQs.map((q) => (
             <View key={q.id}>
               <Text style={styles.pollQuestion}>{q.question}</Text>
@@ -498,6 +541,7 @@ const styles = StyleSheet.create({
   },
   beliefText: { color: colors.dim, fontSize: 13 },
   connectionFact: { color: colors.dim, fontSize: 14, lineHeight: 21 },
+  sparkWhy: { color: colors.faint, fontSize: 12, lineHeight: 17, marginTop: 1 },
   pollQuestion: { color: colors.text, fontSize: 15, fontWeight: "600", marginBottom: 8 },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {

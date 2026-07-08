@@ -42,6 +42,9 @@ export interface QueuedCapture {
     answerItems?: string[];
     phase?: "pre" | "post" | "only";
   }[];
+  /** Sparks the canvasser tapped as used in this conversation (M12) —
+   *  joins the conversation's pre/post pair to per-topic movability. */
+  sparkIds?: string[];
   attempts: number;
   lastError: string | null;
 }
@@ -70,8 +73,10 @@ export interface SyncPorts {
   upsertConversation(capture: QueuedCapture, audioPath: string | null): Promise<void>;
   /** Record the stop outcome on walk_list_items. */
   updateStopStatus(walkListItemId: string, status: string): Promise<void>;
-  /** Persist door-poll answers (must upsert on question+conversation). */
+  /** Persist door-poll answers (must upsert on question+conversation+phase). */
   saveSurveyResponses?(capture: QueuedCapture): Promise<void>;
+  /** Persist spark usages (must upsert on spark+conversation). */
+  saveSparkUsages?(capture: QueuedCapture): Promise<void>;
   /** Optional: clean up the local audio file after a successful sync. */
   deleteLocalAudio?(uri: string): Promise<void>;
 }
@@ -120,6 +125,9 @@ export async function syncQueue(ports: SyncPorts): Promise<SyncResult> {
         await ports.upsertConversation(capture, audioPath);
         if ((capture.surveyResponses?.length ?? 0) > 0 && ports.saveSurveyResponses) {
           await ports.saveSurveyResponses(capture);
+        }
+        if ((capture.sparkIds?.length ?? 0) > 0 && ports.saveSparkUsages) {
+          await ports.saveSparkUsages(capture);
         }
       }
       if (capture.walkListItemId && capture.stopStatus) {

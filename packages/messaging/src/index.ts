@@ -19,6 +19,8 @@ import {
   guardrailPrompt,
 } from "@canvara/prompts";
 
+export * from "./workshop";
+
 let _client: Anthropic | null = null;
 function client(): Anthropic {
   _client ??= new Anthropic();

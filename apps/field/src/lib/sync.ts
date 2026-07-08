@@ -17,6 +17,7 @@ import {
   sqliteQueueStore,
   replaceWalkListCache,
   replaceSurveyCache,
+  replaceSparksCache,
   type CachedStop,
 } from "./local-db";
 import type { Profile } from "./session";
@@ -87,6 +88,17 @@ const ports: SyncPorts = {
       .from("survey_responses")
       .upsert(rows, { onConflict: "question_id,conversation_id,phase" });
     if (error) throw new Error(`survey responses: ${error.message}`);
+  },
+  async saveSparkUsages(capture) {
+    const rows = (capture.sparkIds ?? []).map((sparkId) => ({
+      campaign_id: capture.campaignId,
+      spark_id: sparkId,
+      conversation_id: capture.id,
+    }));
+    const { error } = await supabase
+      .from("spark_usages")
+      .upsert(rows, { onConflict: "spark_id,conversation_id" });
+    if (error) throw new Error(`spark usages: ${error.message}`);
   },
   async deleteLocalAudio(uri) {
     new File(uri).delete();
@@ -220,6 +232,17 @@ export async function syncDown(profile: Profile): Promise<{ lists: number; stops
       .eq("active", true)
       .order("position");
     replaceSurveyCache(questions ?? []);
+  } catch {
+    // keep the previous cache on failure
+  }
+
+  // Approved conversation sparks (M12) — the briefing card's openers.
+  try {
+    const { data: sparks } = await supabase
+      .from("sparks")
+      .select("id, title, opener, why")
+      .eq("status", "approved");
+    replaceSparksCache(sparks ?? []);
   } catch {
     // keep the previous cache on failure
   }

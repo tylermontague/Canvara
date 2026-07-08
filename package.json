@@ -28,7 +28,8 @@
     "test:m8": "node --import tsx --test tests/m8/district.test.ts",
     "test:m9": "node --import tsx --test tests/m9/scenarios.test.ts",
     "test:m10": "node --import tsx --test tests/m10/geocode.test.ts",
-    "test:m11": "node --import tsx --test tests/m11/polling.test.ts"
+    "test:m11": "node --import tsx --test tests/m11/polling.test.ts",
+    "test:m12": "node --import tsx --test tests/m12/workshop.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",

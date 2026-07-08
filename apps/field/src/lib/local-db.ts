@@ -46,6 +46,16 @@ try {
   // column already present
 }
 
+// M12: approved conversation sparks, cached for the briefing card.
+db.execSync(`
+  CREATE TABLE IF NOT EXISTS sparks_cache (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    opener TEXT NOT NULL,
+    why TEXT
+  );
+`);
+
 // ---------- Capture queue (QueueStore implementation) ----------
 
 export const sqliteQueueStore: QueueStore = {
@@ -211,6 +221,33 @@ export function replaceSurveyCache(
       );
     }
   });
+}
+
+// ---------- Approved conversation sparks (M12) ----------
+
+export interface CachedSpark {
+  id: string;
+  title: string;
+  opener: string;
+  why: string | null;
+}
+
+export function replaceSparksCache(sparks: CachedSpark[]): void {
+  db.withTransactionSync(() => {
+    db.runSync("DELETE FROM sparks_cache");
+    for (const s of sparks) {
+      db.runSync("INSERT INTO sparks_cache (id, title, opener, why) VALUES (?, ?, ?, ?)", [
+        s.id,
+        s.title,
+        s.opener,
+        s.why,
+      ]);
+    }
+  });
+}
+
+export function getCachedSparks(): CachedSpark[] {
+  return db.getAllSync<CachedSpark>("SELECT id, title, opener, why FROM sparks_cache");
 }
 
 export function getCachedSurveyQuestions(): CachedSurveyQuestion[] {

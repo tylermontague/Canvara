@@ -37,7 +37,8 @@ const MODULES: { label: string; href?: string; description: string }[] = [
   },
   {
     label: "Voter Contact Workshop",
-    description: "Coming in a later milestone.",
+    href: "/workshop",
+    description: "AI-drafted door-poll questions and canvasser conversation sparks, guardrail-checked.",
   },
   {
     label: "Admin",
