@@ -86,7 +86,7 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-stone">
       <AppHeader />
-      <main className="flex-1 p-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 p-6">
         <h1 className="mb-1 font-serif text-2xl font-bold text-navy">
           {profile.campaigns?.name}
         </h1>

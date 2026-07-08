@@ -49,7 +49,10 @@ export async function AppHeader() {
   }
 
   return (
-    <header className="flex min-h-[60px] items-center justify-between gap-4 bg-navy px-6 py-2">
+    // The navy bar spans the screen; its contents share the page column so
+    // nav and content align on wide desktop monitors.
+    <header className="bg-navy px-6 py-2">
+      <div className="mx-auto flex min-h-[60px] w-full max-w-7xl items-center justify-between gap-4">
       <div className="flex items-center gap-8">
         <Link href="/" className="flex items-center">
           <Image
@@ -92,6 +95,7 @@ export async function AppHeader() {
           <SignOutButton />
         </div>
       )}
+      </div>
     </header>
   );
 }

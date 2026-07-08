@@ -80,7 +80,7 @@ export default async function ScenariosPage({
   return (
     <div className="flex min-h-screen flex-col bg-stone">
       <AppHeader />
-      <main className="flex-1 p-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 p-6">
         <div className="mb-6 flex items-center justify-between">
           <div>
             <Link

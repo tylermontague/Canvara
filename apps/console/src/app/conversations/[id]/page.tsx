@@ -33,7 +33,7 @@ export default async function ConversationDetailPage({
   return (
     <div className="flex min-h-screen flex-col bg-stone">
       <AppHeader />
-      <main className="flex-1 p-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 p-6">
         {convo.voter_id && (
           <Link
             href={`/voters/${convo.voter_id}`}
