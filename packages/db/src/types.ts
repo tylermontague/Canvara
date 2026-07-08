@@ -762,6 +762,111 @@ export type Database = {
         };
         Relationships: [];
       };
+      campaign_events: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          kind: string;
+          title: string;
+          location: unknown;
+          address: string | null;
+          held_at: string;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          kind: string;
+          title: string;
+          location: unknown;
+          address?: string | null;
+          held_at: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          kind?: string;
+          title?: string;
+          location?: unknown;
+          address?: string | null;
+          held_at?: string;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      yard_signs: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          voter_id: string | null;
+          location: unknown;
+          address: string | null;
+          placed_at: string;
+          placed_by: string | null;
+          removed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          voter_id?: string | null;
+          location: unknown;
+          address?: string | null;
+          placed_at?: string;
+          placed_by?: string | null;
+          removed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          voter_id?: string | null;
+          location?: unknown;
+          address?: string | null;
+          placed_at?: string;
+          placed_by?: string | null;
+          removed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      contact_log: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          voter_id: string;
+          method: string;
+          contacted_at: string;
+          source: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          voter_id: string;
+          method: string;
+          contacted_at?: string;
+          source?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          voter_id?: string;
+          method?: string;
+          contacted_at?: string;
+          source?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       messages: {
         Row: {
           id: string;
@@ -926,6 +1031,47 @@ export type Database = {
           n: number;
           newest: string;
           oldest_in_flight: string | null;
+        };
+        Relationships: [];
+      };
+      voter_map_points: {
+        Row: {
+          voter_id: string;
+          campaign_id: string;
+          party: string | null;
+          lat: number;
+          lng: number;
+        };
+        Relationships: [];
+      };
+      sign_map_points: {
+        Row: {
+          sign_id: string;
+          campaign_id: string;
+          address: string | null;
+          placed_at: string;
+          lat: number;
+          lng: number;
+        };
+        Relationships: [];
+      };
+      event_map_points: {
+        Row: {
+          event_id: string;
+          campaign_id: string;
+          kind: string;
+          title: string;
+          held_at: string;
+          lat: number;
+          lng: number;
+        };
+        Relationships: [];
+      };
+      turnout_by_election: {
+        Row: {
+          campaign_id: string;
+          election: string;
+          voted: number;
         };
         Relationships: [];
       };

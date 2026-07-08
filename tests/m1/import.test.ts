@@ -124,6 +124,11 @@ before(async () => {
         .delete()
         .in("voter_id", chunk);
       if (itemErr) throw new Error(`teardown stray items: ${itemErr.message}`);
+      const { error: signErr } = await service
+        .from("yard_signs")
+        .delete()
+        .in("voter_id", chunk);
+      if (signErr) throw new Error(`teardown yard signs: ${signErr.message}`);
       const { error: voterErr } = await service.from("voters").delete().in("id", chunk);
       if (voterErr) throw new Error(`teardown voters: ${voterErr.message}`);
     }

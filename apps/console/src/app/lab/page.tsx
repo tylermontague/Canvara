@@ -5,11 +5,13 @@ import {
   fetchSupportDistribution,
   fetchIssueSalience,
   fetchDailyTrend,
+  fetchDistrictStats,
   PULSE_MIN_SAMPLE,
   ISSUE_MIN_MENTIONS,
   SUPPORT_LEVELS,
 } from "@canvara/shared";
 import { TrendChart } from "./trend-chart";
+import { DistrictMap, type VoterPoint } from "./district-map";
 
 // Ambient Pulse tier 1 (CC-1): support distribution, issue salience, trend.
 // Nonpartisan data palette: navy shades for support, warm neutrals for
@@ -31,10 +33,36 @@ const LEVEL_LABELS: Record<string, string> = {
   unknown: "Unknown",
 };
 
+async function fetchAllMapPoints(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const voters: VoterPoint[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data } = await supabase
+      .from("voter_map_points")
+      .select("lat, lng, party")
+      .range(from, from + 999);
+    voters.push(...(data ?? []));
+    if (!data || data.length < 1000) break;
+  }
+  const [{ data: signs }, { data: events }] = await Promise.all([
+    supabase.from("sign_map_points").select("lat, lng, address, placed_at"),
+    supabase.from("event_map_points").select("lat, lng, kind, title, held_at"),
+  ]);
+  return { voters, signs: signs ?? [], events: events ?? [] };
+}
+
 export default async function LabPage() {
   const supabase = await createClient();
 
-  const [distribution, issues, trend, reviewCount] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("campaign_id")
+    .eq("id", user!.id)
+    .single();
+
+  const [distribution, issues, trend, reviewCount, district, mapData] = await Promise.all([
     fetchSupportDistribution(supabase),
     fetchIssueSalience(supabase),
     fetchDailyTrend(supabase),
@@ -43,6 +71,8 @@ export default async function LabPage() {
       .select("id", { count: "exact", head: true })
       .eq("status", "open")
       .then((r) => r.count ?? 0),
+    fetchDistrictStats(supabase, 2026),
+    fetchAllMapPoints(supabase),
   ]);
 
   // "unknown" is tracked but not charted as stance.
@@ -76,6 +106,69 @@ export default async function LabPage() {
             </Link>
           </div>
         </div>
+
+        {/* District dashboard (M8) */}
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
+          {[
+            {
+              label: "Registered voters",
+              value: district.registered.toLocaleString(),
+              sub: null as string | null,
+            },
+            {
+              label: "Avg turnout",
+              value:
+                district.avgTurnoutPct !== null
+                  ? `${district.avgTurnoutPct.toFixed(1)}%`
+                  : "—",
+              sub:
+                district.turnout.length > 0
+                  ? `${district.turnout.length} general election${district.turnout.length === 1 ? "" : "s"} on file`
+                  : "no vote history on file",
+            },
+            {
+              label: "Last similar cycle",
+              value: district.lastSimilar ? `${district.lastSimilar.pct.toFixed(1)}%` : "—",
+              sub: district.lastSimilar
+                ? district.lastSimilar.election.replace(/_/g, " ")
+                : "none on file",
+            },
+            {
+              label: "Canvassed",
+              value: district.canvassed.toLocaleString(),
+              sub: `${district.canvassedPct.toFixed(1)}% of registered`,
+            },
+            {
+              label: "Other contact",
+              value: district.otherContacted.toLocaleString(),
+              sub: `${district.otherContactedPct.toFixed(1)}% · phone, text, mail, events`,
+            },
+          ].map((stat) => (
+            <div key={stat.label} className="rounded-xl border border-rule bg-white p-4">
+              <p className="text-[11px] font-medium tracking-[0.08em] text-slate uppercase">
+                {stat.label}
+              </p>
+              <p className="mt-1 font-mono text-2xl text-navy">{stat.value}</p>
+              {stat.sub && <p className="mt-0.5 text-xs text-slate">{stat.sub}</p>}
+            </div>
+          ))}
+        </div>
+
+        {/* District map */}
+        <section className="mb-6 rounded-xl border border-rule bg-white p-5">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 className="font-serif text-lg font-bold text-navy">District map</h2>
+            <span className="text-xs text-slate">
+              registration colors · gold = yard signs · navy = events
+            </span>
+          </div>
+          <DistrictMap
+            campaignId={profile!.campaign_id}
+            voters={mapData.voters}
+            signs={mapData.signs}
+            events={mapData.events}
+          />
+        </section>
 
         {/* Support distribution */}
         <section className="mb-6 rounded-xl border border-rule bg-white p-5">

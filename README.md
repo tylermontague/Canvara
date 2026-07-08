@@ -41,6 +41,7 @@ Requirements: `Canvara_Master_Requirements.docx` (in the Canvara Claude project)
 | `npm run test:m6` | M6 exit test: belief engine, retention purge, settings RLS, health |
 | `npm run test:m65` | M6.5 exit test: cohorts, door polls, personal context, precedence |
 | `npm run test:m7` | M7 exit test: Message Lab drafting + Fable guardrail catches alienation |
+| `npm run test:m8` | M8 exit test: district map, turnout math, contact coverage, signs/events |
 
 ## M0 exit test
 
