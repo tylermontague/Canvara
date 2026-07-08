@@ -867,6 +867,81 @@ export type Database = {
         };
         Relationships: [];
       };
+      scenarios: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          name: string;
+          dimension: string;
+          assumptions: Json;
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          name: string;
+          dimension: string;
+          assumptions: Json;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          name?: string;
+          dimension?: string;
+          assumptions?: Json;
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      poll_priors: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          dimension: string;
+          segment: string;
+          our_share_pct: number;
+          source: string;
+          as_of: string | null;
+          created_by: string | null;
+          updated_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          dimension: string;
+          segment: string;
+          our_share_pct: number;
+          source: string;
+          as_of?: string | null;
+          created_by?: string | null;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          dimension?: string;
+          segment?: string;
+          our_share_pct?: number;
+          source?: string;
+          as_of?: string | null;
+          created_by?: string | null;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       messages: {
         Row: {
           id: string;

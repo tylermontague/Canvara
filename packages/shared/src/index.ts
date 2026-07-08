@@ -30,3 +30,4 @@ export * from "./beliefs";
 export * from "./cohorts";
 export * from "./persuasion";
 export * from "./district";
+export * from "./scenarios";

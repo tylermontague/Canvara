@@ -138,6 +138,13 @@ const INCOME_MAP: Record<string, string> = {
   "upper-middle": "over_100k",
 };
 
+export function normalizeDimensionValue(
+  dimension: string,
+  raw: string | null,
+): string | null {
+  return normalize(dimension, raw);
+}
+
 function normalize(dimension: string, raw: string | null): string | null {
   if (!raw) return null;
   const v = raw.trim().toLowerCase();
@@ -171,7 +178,7 @@ export interface CohortEvaluation {
   supportDistribution: Record<string, number>;
 }
 
-interface VoterRow {
+export interface VoterDemographics {
   id: string;
   gender: string | null;
   birth_year: number | null;
@@ -181,6 +188,8 @@ interface VoterRow {
   party: string | null;
   religion: string | null;
 }
+
+type VoterRow = VoterDemographics;
 
 /** Map a voter-attributes key to its cohort dimension. */
 const ATTRIBUTE_DIMENSION: Record<string, string> = {
@@ -194,6 +203,50 @@ const ATTRIBUTE_DIMENSION: Record<string, string> = {
   religion: "religiosity",
   language: "language",
 };
+
+/**
+ * Door-observed attributes per voter, keyed voter_id → dimension → raw
+ * value. They trump voter-file columns wherever both exist.
+ */
+export async function fetchObservedAttributes(
+  db: DbClient,
+): Promise<Map<string, Map<string, string>>> {
+  const observed = new Map<string, Map<string, string>>();
+  const { data, error } = await db
+    .from("voter_attributes")
+    .select("voter_id, key, value");
+  if (error) throw new Error(`observed attributes: ${error.message}`);
+  for (const row of data ?? []) {
+    const dimension = ATTRIBUTE_DIMENSION[row.key] ?? row.key;
+    const map = observed.get(row.voter_id) ?? new Map<string, string>();
+    map.set(dimension, row.value);
+    observed.set(row.voter_id, map);
+  }
+  return observed;
+}
+
+/**
+ * A voter's canonical value on one cohort dimension: door-observed value
+ * first (normalized), voter-file column second. Null when neither maps.
+ */
+export function voterDimensionValue(
+  voter: VoterDemographics,
+  dimension: string,
+  doorObserved?: Map<string, string>,
+): string | null {
+  const door = doorObserved?.get(dimension);
+  if (door) return normalize(dimension, door);
+  switch (dimension) {
+    case "gender": return normalize("gender", voter.gender);
+    case "age_bracket": return ageBracket(voter.birth_year);
+    case "race": return normalize("race", voter.race);
+    case "education": return normalize("education", voter.education);
+    case "income_bracket": return normalize("income_bracket", voter.income_bracket);
+    case "party": return normalize("party", voter.party);
+    case "religiosity": return normalize("religiosity", voter.religion);
+    default: return null;
+  }
+}
 
 /**
  * Evaluate a cohort definition against the campaign's voters. Paged reads;
@@ -217,38 +270,11 @@ export async function evaluateCohort(
   }
 
   // 2. Door-observed attributes (they trump the file).
-  const observed = new Map<string, Map<string, string>>();
-  {
-    const { data, error } = await db
-      .from("voter_attributes")
-      .select("voter_id, key, value");
-    if (error) throw new Error(`cohort attributes: ${error.message}`);
-    for (const row of data ?? []) {
-      const dimension = ATTRIBUTE_DIMENSION[row.key] ?? row.key;
-      const map = observed.get(row.voter_id) ?? new Map<string, string>();
-      map.set(dimension, row.value);
-      observed.set(row.voter_id, map);
-    }
-  }
-
-  const dimensionValue = (voter: VoterRow, dimension: string): string | null => {
-    const door = observed.get(voter.id)?.get(dimension);
-    if (door) return normalize(dimension, door);
-    switch (dimension) {
-      case "gender": return normalize("gender", voter.gender);
-      case "age_bracket": return ageBracket(voter.birth_year);
-      case "race": return normalize("race", voter.race);
-      case "education": return normalize("education", voter.education);
-      case "income_bracket": return normalize("income_bracket", voter.income_bracket);
-      case "party": return normalize("party", voter.party);
-      case "religiosity": return normalize("religiosity", voter.religion);
-      default: return null;
-    }
-  };
+  const observed = await fetchObservedAttributes(db);
 
   let members = voters.filter((v) =>
     Object.entries(definition.demographics ?? {}).every(([dimension, accepted]) => {
-      const value = dimensionValue(v, dimension);
+      const value = voterDimensionValue(v, dimension, observed.get(v.id));
       return value !== null && accepted.includes(value);
     }),
   );
