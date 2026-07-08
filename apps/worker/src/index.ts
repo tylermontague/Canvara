@@ -5,14 +5,17 @@
 import { loadConfig } from "./config";
 import { processAvailable } from "./pipeline";
 import { runRetentionSweep } from "./retention";
+import { runGeocodeSweep } from "./geocode";
 
 const RETENTION_SWEEP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const GEOCODE_SWEEP_INTERVAL_MS = 10 * 60 * 1000;
 
 async function main() {
   const { db, deepgramKey, pollIntervalMs } = loadConfig();
   console.log(`canvara worker: polling every ${pollIntervalMs}ms`);
 
   let lastSweep = 0;
+  let lastGeocode = 0;
   let stopping = false;
   process.on("SIGINT", () => {
     stopping = true;
@@ -31,6 +34,23 @@ async function main() {
           console.log(
             `[worker] retention: purged=${retention.purged} errors=${retention.errors.length}`,
           );
+        }
+      }
+
+      // Geocode sweep (M10): resolve imported addresses to map coordinates.
+      // Drain the whole backlog (a fresh import shouldn't wait 10 minutes
+      // per batch); stop on errors and let the next interval retry.
+      if (Date.now() - lastGeocode > GEOCODE_SWEEP_INTERVAL_MS) {
+        lastGeocode = Date.now();
+        for (;;) {
+          const geocode = await runGeocodeSweep(db);
+          if (geocode.examined > 0 || geocode.errors.length > 0) {
+            console.log(
+              `[worker] geocode: matched=${geocode.matched} unmatched=${geocode.unmatched} ` +
+                `errors=${geocode.errors.length}`,
+            );
+          }
+          if (geocode.examined === 0 || geocode.errors.length > 0) break;
         }
       }
 

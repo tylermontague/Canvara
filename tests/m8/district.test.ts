@@ -162,21 +162,26 @@ test("contact coverage: canvassed and other-method counts move by the seeded del
 });
 
 test("map points: seeded voters appear with party + coordinates under RLS", async () => {
-  const points: { party: string | null; lat: number; lng: number }[] = [];
+  const points: { voter_id: string; party: string | null; lat: number; lng: number }[] = [];
   for (let from = 0; ; from += 1000) {
     const { data, error } = await manager
       .from("voter_map_points")
-      .select("party, lat, lng")
+      .select("voter_id, party, lat, lng")
       .range(from, from + 999);
     assert.ifError(error);
     points.push(...(data ?? []));
     if (!data || data.length < 1000) break;
   }
   assert.ok(points.length >= SEEDED, `≥${SEEDED} mapped voters (got ${points.length})`);
-  const parties = new Set(points.map((p) => p.party));
+  // Judge only this suite's seeded grid — other suites (M10 geocoding)
+  // legitimately place voters elsewhere in the district.
+  const seededSet = new Set(seededVoterIds);
+  const seededPoints = points.filter((p) => seededSet.has(p.voter_id));
+  assert.equal(seededPoints.length, SEEDED, "every seeded voter is mapped");
+  const parties = new Set(seededPoints.map((p) => p.party));
   assert.ok(parties.has("REP") && parties.has("DEM"), "party values flow through");
   assert.ok(
-    points.every((p) => p.lat > 33 && p.lat < 34 && p.lng > -112 && p.lng < -111),
+    seededPoints.every((p) => p.lat > 33 && p.lat < 34 && p.lng > -112 && p.lng < -111),
     "coordinates are sane",
   );
 });

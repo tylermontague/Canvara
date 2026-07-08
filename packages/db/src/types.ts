@@ -96,6 +96,8 @@ export type Database = {
           gender: string | null;
           vote_history: Json | null;
           location: unknown | null;
+          geocode_status: string | null;
+          geocoded_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -117,6 +119,8 @@ export type Database = {
           gender?: string | null;
           vote_history?: Json | null;
           location?: unknown | null;
+          geocode_status?: string | null;
+          geocoded_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -138,6 +142,8 @@ export type Database = {
           gender?: string | null;
           vote_history?: Json | null;
           location?: unknown | null;
+          geocode_status?: string | null;
+          geocoded_at?: string | null;
           created_at?: string;
         };
         Relationships: [
