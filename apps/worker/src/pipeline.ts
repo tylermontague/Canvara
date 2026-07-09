@@ -10,6 +10,7 @@ import { transcribe } from "./deepgram";
 import { extractSignal, signalToRow } from "./extract";
 import { generateDebriefSummary } from "./debrief";
 import { parseWkbPoint } from "./wkb";
+import { sanitizeForLog } from "./log";
 
 const CORRELATION_RADIUS_M = 75;
 
@@ -68,7 +69,7 @@ async function fail(db: DbClient, convo: Conversation, err: unknown): Promise<vo
   const message = err instanceof Error ? err.message : String(err);
   await db.from("conversations").update({ status: "failed" }).eq("id", convo.id);
   await audit(db, convo.campaign_id, "pipeline_failed", convo.id, { error: message });
-  console.error(`[pipeline] ${convo.id} failed: ${message}`);
+  console.error(`[pipeline] ${convo.id} failed: ${sanitizeForLog(message)}`);
 }
 
 /** Stage 1: download audio, transcribe with diarization. */
@@ -141,7 +142,7 @@ async function extractStage(db: DbClient, convo: Conversation): Promise<"extract
   try {
     debriefSummary = await generateDebriefSummary(transcript, outcome.signal);
   } catch (err) {
-    console.warn(`[pipeline] debrief summary failed for ${convo.id}:`, err);
+    console.warn(`[pipeline] debrief summary failed for ${convo.id}: ${sanitizeForLog(err)}`);
   }
 
   const { error: signalErr } = await db.from("signals").upsert(
@@ -201,12 +202,13 @@ async function extractStage(db: DbClient, convo: Conversation): Promise<"extract
         });
         if (result.skippedUnknown.length > 0) {
           console.warn(
-            `[pipeline] ${convo.id}: issues outside taxonomy skipped for beliefs: ${result.skippedUnknown.join(", ")}`,
+            `[pipeline] ${convo.id}: issues outside taxonomy skipped for beliefs: ` +
+              sanitizeForLog(result.skippedUnknown.join(", ")),
           );
         }
       } catch (err) {
         // Beliefs are derived state — never block the pipeline on them.
-        console.warn(`[pipeline] belief update failed for ${convo.id}:`, err);
+        console.warn(`[pipeline] belief update failed for ${convo.id}: ${sanitizeForLog(err)}`);
       }
     }
   }

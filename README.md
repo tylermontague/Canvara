@@ -46,6 +46,7 @@ Requirements: `Canvara_Master_Requirements.docx` (in the Canvara Claude project)
 | `npm run test:m10` | M10 exit test: Census geocoding sweep — real addresses become map dots |
 | `npm run test:m11` | M11 exit test: cold-test protocol, issue rankings, pre/post persuasion delta |
 | `npm run test:m12` | M12 exit test: workshop drafting, neutrality guardrail, spark effectiveness |
+| `npm run test:m13` | Security exit test: append-only audit log, pinned RLS functions, log sanitizer |
 
 ## M0 exit test
 

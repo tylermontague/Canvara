@@ -27,6 +27,7 @@
     "./extract": "./src/extract.ts",
     "./deepgram": "./src/deepgram.ts",
     "./retention": "./src/retention.ts",
-    "./geocode": "./src/geocode.ts"
+    "./geocode": "./src/geocode.ts",
+    "./log": "./src/log.ts"
   }
 }

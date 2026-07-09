@@ -6,6 +6,7 @@ import { loadConfig } from "./config";
 import { processAvailable } from "./pipeline";
 import { runRetentionSweep } from "./retention";
 import { runGeocodeSweep } from "./geocode";
+import { sanitizeForLog } from "./log";
 
 const RETENTION_SWEEP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const GEOCODE_SWEEP_INTERVAL_MS = 10 * 60 * 1000;
@@ -63,7 +64,7 @@ async function main() {
         );
       }
     } catch (err) {
-      console.error("[worker] poll error:", err instanceof Error ? err.message : err);
+      console.error(`[worker] poll error: ${sanitizeForLog(err)}`);
     }
     await new Promise((r) => setTimeout(r, pollIntervalMs));
   }
