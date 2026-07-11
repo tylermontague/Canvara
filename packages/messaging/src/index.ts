@@ -11,7 +11,10 @@ import {
   evaluateCohort,
   fetchIssueSalience,
   fetchPersuasionProfile,
+  fetchCampaignNarrative,
+  formatNarrativeForPrompt,
   type CohortDefinition,
+  type CampaignNarrative,
 } from "@canvara/shared";
 import {
   messageCohortPrompt,
@@ -51,6 +54,12 @@ export const GuardrailSchema = z.object({
 export type GuardrailResult = z.infer<typeof GuardrailSchema>;
 
 export type MessageGoal = "persuade" | "turnout" | "introduce";
+
+/** The campaign narrative as a leading prompt block (empty when unset). */
+function narrativeBlock(narrative: CampaignNarrative | null): string {
+  const text = formatNarrativeForPrompt(narrative);
+  return text ? `<campaign_narrative>\n${text}\n</campaign_narrative>\n\n` : "";
+}
 
 // ---------- Guardrail (Fable 5 with Opus fallback, per ADR-8) ----------
 
@@ -182,9 +191,10 @@ export async function generateCohortMessages(
     .single();
   if (error || !cohort) throw new Error(`cohort: ${error?.message ?? "not found"}`);
 
-  const [evaluation, salience] = await Promise.all([
+  const [evaluation, salience, narrative] = await Promise.all([
     evaluateCohort(db, cohort.definition as unknown as CohortDefinition),
     fetchIssueSalience(db),
+    fetchCampaignNarrative(db, opts.campaignId),
   ]);
 
   const evidence = {
@@ -193,12 +203,14 @@ export async function generateCohortMessages(
     support_distribution: evaluation.supportDistribution,
     issue_salience: salience.slice(0, 8),
     focus_issue: opts.issue ?? null,
+    narrative: narrative ?? null,
   };
   const evidenceText = JSON.stringify(evidence, null, 2);
 
   const drafts = await draftVariants(
     messageCohortPrompt.text,
-    `<evidence>\n${evidenceText}\n</evidence>\n\nGoal: ${opts.goal}` +
+    narrativeBlock(narrative) +
+      `<evidence>\n${evidenceText}\n</evidence>\n\nGoal: ${opts.goal}` +
       (opts.issue ? `\nFocus issue: ${opts.issue}` : "") +
       `\n\nDraft the variants.`,
   );
@@ -220,9 +232,10 @@ export async function generateIndividualMessages(
   db: DbClient,
   opts: CommonOpts & { voterId: string },
 ): Promise<GeneratedMessage[]> {
-  const [profile, voterRes] = await Promise.all([
+  const [profile, voterRes, narrative] = await Promise.all([
     fetchPersuasionProfile(db, opts.voterId),
     db.from("voters").select("first_name, last_name, party").eq("id", opts.voterId).single(),
+    fetchCampaignNarrative(db, opts.campaignId),
   ]);
   if (voterRes.error) throw new Error(`voter: ${voterRes.error.message}`);
 
@@ -238,12 +251,14 @@ export async function generateIndividualMessages(
     resonance_history: profile.resonanceHistory.slice(0, 8),
     precedence: profile.precedence,
     focus_issue: opts.issue ?? null,
+    narrative: narrative ?? null,
   };
   const evidenceText = JSON.stringify(evidence, null, 2);
 
   const drafts = await draftVariants(
     messageIndividualPrompt.text,
-    `<persuasion_profile>\n${evidenceText}\n</persuasion_profile>\n\nGoal: ${opts.goal}` +
+    narrativeBlock(narrative) +
+      `<persuasion_profile>\n${evidenceText}\n</persuasion_profile>\n\nGoal: ${opts.goal}` +
       (opts.issue ? `\nFocus issue: ${opts.issue}` : "") +
       `\n\nDraft the variants.`,
   );

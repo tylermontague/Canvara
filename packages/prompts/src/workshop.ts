@@ -7,7 +7,7 @@
 import type { PromptVersion } from "./index";
 
 export const POLL_QUESTIONS_VERSION = "draft-poll-questions.v1";
-export const SPARKS_VERSION = "draft-sparks.v1";
+export const SPARKS_VERSION = "draft-sparks.v2";
 export const NEUTRALITY_GUARDRAIL_VERSION = "guardrail-neutrality.v1";
 
 export const pollQuestionsPrompt: PromptVersion = {
@@ -63,6 +63,14 @@ Requirements for every spark:
   from a stereotype. Evidence describes tendencies; the person at the
   door may be the exception, and the spark must still land if they are.
 - Spoken English a volunteer can deliver naturally in one breath.
+- When the campaign has authored a CAMPAIGN NARRATIVE (the candidate's
+  story, values, and voice), a spark may open a door TO that story — e.g.
+  a candidate who "spent their whole life in this part of town" invites
+  the voter to talk about how the neighborhood has changed. Use the
+  narrative to make the opener feel like it comes from this specific
+  candidate. Never invent narrative the campaign didn't provide, and keep
+  the focus on the voter — the spark still asks about THEIR life, it just
+  connects naturally to the candidate's.
 - 'title' is a 2–4 word label for the canvasser's card. 'body' is the
   spark itself, optionally followed on a new line by "Why:" and one
   sentence for the canvasser about why this tends to open people up.

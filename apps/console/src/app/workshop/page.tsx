@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
@@ -112,6 +113,13 @@ export default async function WorkshopPage() {
           <h1 className="font-serif text-2xl font-bold text-navy">Voter Contact Workshop</h1>
           <p className="text-sm text-slate">
             Questions worth asking, openers worth trying — vetted before anyone knocks.
+          </p>
+          <p className="mt-1 text-xs text-slate">
+            Drafts are grounded in your campaign narrative —{" "}
+            <Link href="/narrative" className="underline-offset-2 hover:underline">
+              edit it at Narrative
+            </Link>
+            .
           </p>
         </div>
 

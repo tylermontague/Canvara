@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AppHeader } from "@/components/app-header";
 import type { Role } from "@canvara/shared";
@@ -74,6 +75,13 @@ export default async function MessageLabPage() {
           <p className="text-sm text-slate">
             Messages are hypotheses tested against evidence. Drafted from cohort and personal
             intelligence, guardrail-checked, human-approved.
+          </p>
+          <p className="mt-1 text-xs text-slate">
+            Drafts are grounded in your campaign narrative —{" "}
+            <Link href="/narrative" className="underline-offset-2 hover:underline">
+              edit it at Narrative
+            </Link>
+            .
           </p>
         </div>
 

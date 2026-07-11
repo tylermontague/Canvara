@@ -11,6 +11,8 @@ import type { DbClient, Json } from "@canvara/db";
 import {
   evaluateCohort,
   fetchIssueSalience,
+  fetchCampaignNarrative,
+  formatNarrativeForPrompt,
   type CohortDefinition,
 } from "@canvara/shared";
 import {
@@ -220,17 +222,23 @@ export async function generateSparks(
       support_distribution: evaluation.supportDistribution,
     };
   }
-  const salience = await fetchIssueSalience(db);
+  const [salience, narrative] = await Promise.all([
+    fetchIssueSalience(db),
+    fetchCampaignNarrative(db, opts.campaignId),
+  ]);
 
   const evidence = {
     cohort: cohortEvidence,
     issue_salience: salience.slice(0, 8),
+    narrative: narrative ?? null,
   };
   const evidenceText = JSON.stringify(evidence, null, 2);
 
+  const narrativeText = formatNarrativeForPrompt(narrative);
   const drafts = await draft(
     sparksPrompt.text,
-    `<evidence>\n${evidenceText}\n</evidence>\n` +
+    (narrativeText ? `<campaign_narrative>\n${narrativeText}\n</campaign_narrative>\n\n` : "") +
+      `<evidence>\n${evidenceText}\n</evidence>\n` +
       (cohortName
         ? `\nThese sparks are for canvassers talking with the "${cohortName}" cohort.`
         : `\nThese sparks are campaign-wide (any voter at any door).`) +

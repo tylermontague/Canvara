@@ -31,6 +31,11 @@ const MODULES: { label: string; href?: string; description: string }[] = [
     description: "Standing by cohort and the what-if electorate simulator.",
   },
   {
+    label: "Narrative",
+    href: "/narrative",
+    description: "The candidate's story and voice, woven into every message and spark.",
+  },
+  {
     label: "Message Lab",
     href: "/message-lab",
     description: "Cohort and individually tailored messages, guardrail-checked.",

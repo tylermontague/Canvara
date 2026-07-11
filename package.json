@@ -31,7 +31,8 @@
     "test:m11": "node --import tsx --test tests/m11/polling.test.ts",
     "test:m12": "node --import tsx --test tests/m12/workshop.test.ts",
     "test:m13": "node --import tsx --test tests/m13/security.test.ts",
-    "test:m14": "node --import tsx --test tests/m14/data-portal.test.ts"
+    "test:m14": "node --import tsx --test tests/m14/data-portal.test.ts",
+    "test:m15": "node --import tsx --test tests/m15/narrative.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",

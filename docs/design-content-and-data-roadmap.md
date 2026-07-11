@@ -42,7 +42,15 @@ onto the same voter. Re-importing any source must MERGE, never replace.
 personal_context) → re-import the same file → assert every derived datum
 survives and file columns updated correctly.
 
-## 2. Campaign Narrative — the candidate's persona, woven into every contact
+## 2. Campaign Narrative — the candidate's persona, woven into every contact — BUILT (M15)
+
+Built 2026-07-11 (migration 17 campaign_narrative, packages/shared/narrative.ts,
+message prompts bumped to v2 + sparks to v2, messaging injects the narrative
+into every generator + snapshots it into the message evidence, M15 exit test
+proves a distinctive persona echoes into generated copy, console /narrative
+editor). Open follow-up: an optional on-narrative/off-narrative guardrail
+check (a message that contradicts the candidate's story is as bad as an
+alienating one).
 
 New, and foundational to the content pipeline. The candidate has a story
 and ethos — "I'm Nick Willis, spent my whole life in this part of town,

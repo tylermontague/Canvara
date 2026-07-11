@@ -124,7 +124,7 @@ test("individual message: drafted from personal evidence, guardrailed, stored", 
     .single();
   assert.equal(row!.kind, "individual");
   assert.equal(row!.status, "draft");
-  assert.equal(row!.prompt_version, "message-individual.v1");
+  assert.equal(row!.prompt_version, "message-individual.v2");
   const evidence = row!.evidence as { personal_context: string[]; precedence: string };
   assert.ok(evidence.personal_context.length >= 2, "message stores the evidence that shaped it");
   assert.equal(evidence.precedence, "individual_over_cohort");
@@ -180,7 +180,7 @@ test("cohort message: grounded in the block's evidence", async () => {
     .eq("id", generated[0].id)
     .single();
   assert.equal(row!.kind, "cohort");
-  assert.equal(row!.prompt_version, "message-cohort.v1");
+  assert.equal(row!.prompt_version, "message-cohort.v2");
   const evidence = row!.evidence as { members: number; cohort: { name: string } };
   assert.equal(evidence.members, 3, "evidence carries the evaluated member count (A, B, E)");
   assert.equal(evidence.cohort.name, "M7 Tax-angry college grads");

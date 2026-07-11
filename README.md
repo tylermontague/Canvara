@@ -48,6 +48,7 @@ Requirements: `Canvara_Master_Requirements.docx` (in the Canvara Claude project)
 | `npm run test:m12` | M12 exit test: workshop drafting, neutrality guardrail, spark effectiveness |
 | `npm run test:m13` | Security exit test: append-only audit log, pinned RLS functions, log sanitizer |
 | `npm run test:m14` | M14 exit test: voter re-import merges, never destroys field intelligence |
+| `npm run test:m15` | M15 exit test: campaign narrative shapes generated messages + sparks |
 
 ## M0 exit test
 

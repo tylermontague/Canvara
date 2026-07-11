@@ -891,6 +891,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      campaign_narrative: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          candidate_name: string | null;
+          pitch: string | null;
+          story: string | null;
+          values: string[];
+          signature_issues: string[];
+          proof_points: string[];
+          tone: string | null;
+          updated_by: string | null;
+          updated_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          candidate_name?: string | null;
+          pitch?: string | null;
+          story?: string | null;
+          values?: string[];
+          signature_issues?: string[];
+          proof_points?: string[];
+          tone?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          candidate_name?: string | null;
+          pitch?: string | null;
+          story?: string | null;
+          values?: string[];
+          signature_issues?: string[];
+          proof_points?: string[];
+          tone?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       imports: {
         Row: {
           id: string;

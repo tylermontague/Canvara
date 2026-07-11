@@ -17,6 +17,7 @@ const MODULES: { label: string; href?: string }[] = [
   { label: "Field Office", href: "/voters" },
   { label: "Voter Intelligence Lab", href: "/lab" },
   { label: "Scenarios", href: "/lab/scenarios" },
+  { label: "Narrative", href: "/narrative" },
   { label: "Message Lab", href: "/message-lab" },
   { label: "Voter Contact Workshop", href: "/workshop" },
   { label: "Admin", href: "/admin" },
