@@ -30,7 +30,8 @@
     "test:m10": "node --import tsx --test tests/m10/geocode.test.ts",
     "test:m11": "node --import tsx --test tests/m11/polling.test.ts",
     "test:m12": "node --import tsx --test tests/m12/workshop.test.ts",
-    "test:m13": "node --import tsx --test tests/m13/security.test.ts"
+    "test:m13": "node --import tsx --test tests/m13/security.test.ts",
+    "test:m14": "node --import tsx --test tests/m14/data-portal.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.1.0",

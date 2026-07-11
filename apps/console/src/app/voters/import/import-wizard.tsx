@@ -8,20 +8,25 @@ import {
   suggestMapping,
   mapRows,
   VOTER_FIELDS,
+  fetchExistingForMerge,
+  planVoterImport,
+  applyVoterImport,
   type ColumnMapping,
   type VoterFieldKey,
+  type ImportPlan,
+  type ApplyImportResult,
 } from "@canvara/shared";
 import { createClient } from "@/lib/supabase/client";
 
-const BATCH_SIZE = 500;
 const PREVIEW_ROWS = 12;
 const ADDRESS_SLOTS = 3;
 
 type Phase =
   | { step: "upload" }
   | { step: "configure" }
-  | { step: "importing"; done: number; total: number }
-  | { step: "complete"; imported: number; skipped: number }
+  | { step: "preview"; plan: ImportPlan; campaignId: string; actorId: string; sourceLabel: string }
+  | { step: "importing" }
+  | { step: "complete"; result: ApplyImportResult }
   | { step: "error"; message: string };
 
 export function ImportWizard() {
@@ -30,6 +35,8 @@ export function ImportWizard() {
   const [fileName, setFileName] = useState("");
   const [headerRow, setHeaderRow] = useState(0);
   const [mapping, setMapping] = useState<ColumnMapping>({});
+  const [sourceLabel, setSourceLabel] = useState("");
+  const [deactivateAbsent, setDeactivateAbsent] = useState(false);
   const [phase, setPhase] = useState<Phase>({ step: "upload" });
 
   const header = rows[headerRow] ?? [];
@@ -51,6 +58,7 @@ export function ImportWizard() {
     const detected = detectHeaderRow(parsed);
     setRows(parsed);
     setFileName(file.name);
+    setSourceLabel(file.name);
     setHeaderRow(detected);
     setMapping(suggestMapping(parsed[detected]));
     setPhase({ step: "configure" });
@@ -83,7 +91,7 @@ export function ImportWizard() {
     });
   }
 
-  async function runImport() {
+  async function runPreview() {
     if (!mapped || mapped.voters.length === 0) return;
     const supabase = createClient();
 
@@ -104,24 +112,47 @@ export function ImportWizard() {
       return;
     }
 
-    const voters = mapped.voters.map((v) => ({ ...v, campaign_id: profile.campaign_id }));
-    setPhase({ step: "importing", done: 0, total: voters.length });
-
-    for (let i = 0; i < voters.length; i += BATCH_SIZE) {
-      const batch = voters.slice(i, i + BATCH_SIZE);
-      const { error } = await supabase.from("voters").insert(batch);
-      if (error) {
-        setPhase({
-          step: "error",
-          message: `Import failed at row ${i + 1}: ${error.message}. ${i} rows were imported before the failure.`,
-        });
-        return;
-      }
-      setPhase({ step: "importing", done: Math.min(i + BATCH_SIZE, voters.length), total: voters.length });
+    try {
+      const existing = await fetchExistingForMerge(supabase, profile.campaign_id);
+      const plan = planVoterImport(existing, mapped.voters, { deactivateAbsent });
+      setPhase({
+        step: "preview",
+        plan,
+        campaignId: profile.campaign_id,
+        actorId: user.id,
+        sourceLabel: sourceLabel.trim() || fileName || "Untitled import",
+      });
+    } catch (err) {
+      setPhase({
+        step: "error",
+        message: err instanceof Error ? err.message : "Could not compute the merge preview.",
+      });
     }
+  }
 
-    setPhase({ step: "complete", imported: voters.length, skipped: mapped.skipped });
-    router.refresh();
+  async function confirmMerge() {
+    if (phase.step !== "preview" || !mapped) return;
+    const { campaignId, actorId, sourceLabel: label } = phase;
+    setPhase({ step: "importing" });
+    const supabase = createClient();
+
+    try {
+      const result = await applyVoterImport(supabase, mapped.voters, {
+        campaignId,
+        actorId,
+        sourceLabel: label,
+        filename: fileName || null,
+        mapping,
+        deactivateAbsent,
+      });
+      setPhase({ step: "complete", result });
+      router.refresh();
+    } catch (err) {
+      setPhase({
+        step: "error",
+        message: err instanceof Error ? err.message : "The merge failed.",
+      });
+    }
   }
 
   // ---------- render ----------
@@ -148,35 +179,37 @@ export function ImportWizard() {
         </label>
         <p className="text-xs text-slate">
           Disclaimers, preamble rows, and split headers are handled — you&apos;ll confirm the
-          header row and column mapping before anything is imported.
+          header row and column mapping before anything is merged.
         </p>
       </div>
     );
   }
 
   if (phase.step === "importing") {
-    const pct = Math.round((phase.done / phase.total) * 100);
     return (
       <div className="max-w-xl space-y-3">
-        <p className="text-sm text-ink">
-          Importing {phase.total.toLocaleString()} voters… {phase.done.toLocaleString()} done
-        </p>
+        <p className="text-sm text-ink">Merging…</p>
         <div className="h-2 overflow-hidden rounded-full bg-rule">
-          <div
-            className="h-full bg-navy transition-all duration-200 ease-out"
-            style={{ width: `${pct}%` }}
-          />
+          <div className="h-full w-full animate-pulse bg-navy" />
         </div>
       </div>
     );
   }
 
   if (phase.step === "complete") {
+    const { result } = phase;
     return (
       <div className="max-w-xl space-y-4">
         <p className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-800">
-          Imported {phase.imported.toLocaleString()} voters
-          {phase.skipped > 0 ? ` (${phase.skipped} empty rows skipped)` : ""}.
+          Merge complete: {result.counts.inserted.toLocaleString()} new,{" "}
+          {result.counts.updated.toLocaleString()} updated,{" "}
+          {result.counts.unchanged.toLocaleString()} unchanged,{" "}
+          {result.counts.dropped.toLocaleString()} moved out,{" "}
+          {result.counts.reactivated.toLocaleString()} returning
+          {result.counts.unmergeable > 0
+            ? ` (${result.counts.unmergeable} unmergeable rows skipped)`
+            : ""}
+          .
         </p>
         <div className="flex gap-3">
           <a
@@ -188,11 +221,71 @@ export function ImportWizard() {
           <button
             onClick={() => {
               setRows([]);
+              setSourceLabel("");
               setPhase({ step: "upload" });
             }}
             className="rounded-lg border border-rule bg-white px-4 py-2 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone"
           >
             Import another file
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase.step === "preview") {
+    const { plan } = phase;
+    const tiles: { label: string; value: number }[] = [
+      { label: "New voters", value: plan.counts.inserted },
+      { label: "Updated", value: plan.counts.updated },
+      { label: "Unchanged", value: plan.counts.unchanged },
+      { label: "Moving out", value: plan.counts.dropped },
+      { label: "Returning", value: plan.counts.reactivated },
+    ];
+    return (
+      <div className="max-w-2xl space-y-5">
+        <h2 className="font-serif text-lg font-bold text-navy">Merge preview</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {tiles.map((t) => (
+            <div key={t.label} className="rounded-xl border border-rule bg-white p-3 text-center">
+              <div className="font-mono text-xl font-bold text-navy">
+                {t.value.toLocaleString()}
+              </div>
+              <div className="mt-1 text-[11px] tracking-[0.04em] text-slate uppercase">
+                {t.label}
+              </div>
+            </div>
+          ))}
+        </div>
+        {plan.counts.unmergeable > 0 && (
+          <p className="rounded-lg border border-rule bg-stone p-3 text-xs text-slate">
+            {plan.counts.unmergeable} row{plan.counts.unmergeable === 1 ? "" : "s"} had no voter
+            ID and can&apos;t be matched; they were skipped.
+          </p>
+        )}
+        <div className="rounded-xl border border-navy/20 bg-navy/5 p-4">
+          <p className="mb-1 text-sm font-semibold text-navy">
+            Canvassing data is always preserved.
+          </p>
+          <p className="text-sm text-ink">
+            Updating the file only refreshes name, address, party, and other file fields. Door
+            conversations, observed attributes, beliefs, notes, and analysis are never touched.
+            Voters who dropped off the new file are set aside (inactive), not deleted — their
+            history stays.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => void confirmMerge()}
+            className="rounded-lg bg-gold px-5 py-2 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-gold-hover"
+          >
+            Confirm &amp; merge
+          </button>
+          <button
+            onClick={() => setPhase({ step: "configure" })}
+            className="rounded-lg border border-rule bg-white px-4 py-2 text-sm text-navy transition-colors duration-200 ease-out hover:bg-stone"
+          >
+            Back
           </button>
         </div>
       </div>
@@ -285,9 +378,34 @@ export function ImportWizard() {
       </section>
 
       <section>
-        <h2 className="mb-1 font-serif text-lg font-bold text-navy">3. Preview &amp; import</h2>
+        <h2 className="mb-1 font-serif text-lg font-bold text-navy">3. Merge</h2>
         {mapped && (
           <>
+            <label className="mb-3 flex max-w-md items-center justify-between gap-3 text-sm">
+              <span className="text-ink">Source label</span>
+              <input
+                type="text"
+                value={sourceLabel}
+                onChange={(e) => setSourceLabel(e.target.value)}
+                placeholder={fileName}
+                className="w-64 rounded-lg border border-rule bg-white px-2 py-1.5 text-ink outline-none transition-colors duration-200 ease-out focus:border-gold"
+              />
+            </label>
+            <label className="mb-3 flex max-w-md items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={deactivateAbsent}
+                onChange={(e) => setDeactivateAbsent(e.target.checked)}
+                className="mt-0.5 accent-navy"
+              />
+              <span className="text-ink">
+                This is my complete, current voter file.
+                <span className="mt-0.5 block text-xs text-slate">
+                  Mark voters missing from it as moved out (set aside, not deleted). Leave
+                  unchecked for a partial or supplemental file so no one is retired by mistake.
+                </span>
+              </span>
+            </label>
             <p className="mb-2 text-sm text-slate">
               {mapped.voters.length.toLocaleString()} voters ready
               {mapped.skipped > 0 ? ` · ${mapped.skipped} empty rows will be skipped` : ""}
@@ -320,11 +438,11 @@ export function ImportWizard() {
               </table>
             </div>
             <button
-              onClick={() => void runImport()}
+              onClick={() => void runPreview()}
               disabled={mapped.voters.length === 0}
               className="rounded-lg bg-gold px-5 py-2 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-gold-hover disabled:opacity-50"
             >
-              Import {mapped.voters.length.toLocaleString()} voters
+              Preview merge
             </button>
           </>
         )}

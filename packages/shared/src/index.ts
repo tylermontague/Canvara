@@ -34,3 +34,4 @@ export * from "./scenarios";
 export * from "./geocode";
 export * from "./polling";
 export * from "./sparks";
+export * from "./voter-merge";

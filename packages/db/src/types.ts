@@ -98,6 +98,9 @@ export type Database = {
           location: unknown | null;
           geocode_status: string | null;
           geocoded_at: string | null;
+          active: boolean;
+          dropped_from_file_at: string | null;
+          last_import_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -121,6 +124,9 @@ export type Database = {
           location?: unknown | null;
           geocode_status?: string | null;
           geocoded_at?: string | null;
+          active?: boolean;
+          dropped_from_file_at?: string | null;
+          last_import_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -144,6 +150,9 @@ export type Database = {
           location?: unknown | null;
           geocode_status?: string | null;
           geocoded_at?: string | null;
+          active?: boolean;
+          dropped_from_file_at?: string | null;
+          last_import_id?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -878,6 +887,57 @@ export type Database = {
           method?: string;
           contacted_at?: string;
           source?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      imports: {
+        Row: {
+          id: string;
+          campaign_id: string;
+          source_label: string;
+          filename: string | null;
+          row_count: number;
+          inserted_count: number;
+          updated_count: number;
+          unchanged_count: number;
+          dropped_count: number;
+          reactivated_count: number;
+          unmergeable_count: number;
+          mapping: Json;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          campaign_id: string;
+          source_label: string;
+          filename?: string | null;
+          row_count?: number;
+          inserted_count?: number;
+          updated_count?: number;
+          unchanged_count?: number;
+          dropped_count?: number;
+          reactivated_count?: number;
+          unmergeable_count?: number;
+          mapping?: Json;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          campaign_id?: string;
+          source_label?: string;
+          filename?: string | null;
+          row_count?: number;
+          inserted_count?: number;
+          updated_count?: number;
+          unchanged_count?: number;
+          dropped_count?: number;
+          reactivated_count?: number;
+          unmergeable_count?: number;
+          mapping?: Json;
+          created_by?: string | null;
           created_at?: string;
         };
         Relationships: [];

@@ -55,7 +55,12 @@ const expoConfig: ExpoConfig = {
     ],
   ],
   experiments: {
-    typedRoutes: true,
+    // typedRoutes generates route types at dev-server start by resolving
+    // expo-router from the repo root, where npm nested it under the app
+    // instead of hoisting — which crashes `expo start`. Off until the
+    // dependency is hoisted (a deploy-time / EAS concern). Routing itself
+    // is unaffected; this only drops route-name TypeScript autocomplete.
+    typedRoutes: false,
     reactCompiler: true,
   },
   extra: {
