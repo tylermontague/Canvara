@@ -126,6 +126,39 @@ immutability, and header posture. Findings were remediated in migration
 the M13 exit test. No cross-tenant, XSS, secret-exposure, or SQL-injection
 vulnerability was found.
 
+## Supabase advisory: `public.spatial_ref_sys` (2026-07-12)
+Supabase's security scanner flags `public.spatial_ref_sys` as "publicly
+accessible — RLS not enabled," and the `anon`/`authenticated` API roles
+hold full DML (INSERT/UPDATE/DELETE/TRUNCATE) on it.
+
+- **What it is:** the PostGIS coordinate-system reference table (standard
+  SRID definitions). It contains **no campaign or voter data** — only
+  static, world-standard geospatial reference rows. It sits in `public`
+  because PostGIS is installed there.
+- **Actual risk:** low. No sensitive data is exposed. The theoretical
+  exposure is that an anon caller could corrupt/delete PostGIS reference
+  rows (a geospatial integrity / DoS nuisance), not exfiltrate any
+  Canvara data. A verified full-DB audit confirms every one of the 28
+  application tables has RLS enabled with policies; `spatial_ref_sys` is
+  the only table without RLS.
+- **Why we can't fix it in a migration:** the table is owned by
+  `supabase_admin`. From the `postgres` role our migrations use, `ALTER
+  TABLE ... ENABLE ROW LEVEL SECURITY` fails ("must be owner") and
+  `REVOKE` is a silent no-op ("no privileges could be revoked"; the grants
+  were made by `supabase_admin` without grant option). Both were verified
+  directly against the live database.
+- **Resolution path (platform-level, owner action):**
+  1. Supabase Dashboard → Advisors → Security Advisor → the
+     `spatial_ref_sys` item; apply Supabase's fix if offered (it runs with
+     the required privilege), or acknowledge it — this is a well-known
+     benign advisory for every PostGIS-enabled project.
+  2. Long-term clean fix, to do at production-deploy time: install PostGIS
+     in a dedicated `extensions` schema instead of `public`, so
+     `spatial_ref_sys` leaves the API-exposed schema entirely. (Requires
+     provisioning the extension in the right schema when the production
+     project is set up; can't be retrofitted from our role on the current
+     project.)
+
 ## Residual items / roadmap
 These are known, accepted, and scheduled — none is an active
 vulnerability:
