@@ -9,9 +9,15 @@ dist/
 .DS_Store
 supabase/.temp/
 
-# Local voter file samples — legally restricted use, never commit
+# Local voter files — real voter PII, A.R.S. §39-121.03 restricted, NEVER commit.
+# Broad by design: this is a campaign-data repo; no voter file belongs in git.
 voter_file_sample.csv
 *.voterfile.csv
+*.xlsx
+*.xls
+AZ Statewide*
+# converted/derived voter data
+*.voters.csv
 
 # Generated test fixtures (reproducible via npm run gen:m3-audio)
 tests/m3/fixtures/audio.wav
