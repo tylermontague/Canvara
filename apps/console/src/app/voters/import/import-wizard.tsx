@@ -11,10 +11,15 @@ import {
   fetchExistingForMerge,
   planVoterImport,
   applyVoterImport,
+  sniffImportFormat,
+  parseWorkbookGrids,
+  pickLikeliestSheet,
+  IMPORT_ACCEPT,
   type ColumnMapping,
   type VoterFieldKey,
   type ImportPlan,
   type ApplyImportResult,
+  type SheetGrid,
 } from "@canvara/shared";
 import { createClient } from "@/lib/supabase/client";
 
@@ -23,6 +28,7 @@ const ADDRESS_SLOTS = 3;
 
 type Phase =
   | { step: "upload" }
+  | { step: "pickSheet"; sheets: SheetGrid[] }
   | { step: "configure" }
   | { step: "preview"; plan: ImportPlan; campaignId: string; actorId: string; sourceLabel: string }
   | { step: "importing" }
@@ -48,20 +54,51 @@ export function ImportWizard() {
     [rows, headerRow, mapping],
   );
 
-  async function handleFile(file: File) {
-    const text = await file.text();
-    const parsed = parseCsv(text);
-    if (parsed.length < 2) {
+  /** Take a parsed grid into the configure step. */
+  function useGrid(grid: string[][], name: string) {
+    if (grid.length < 2) {
       setPhase({ step: "error", message: "That file has no data rows." });
       return;
     }
-    const detected = detectHeaderRow(parsed);
-    setRows(parsed);
-    setFileName(file.name);
-    setSourceLabel(file.name);
+    const detected = detectHeaderRow(grid);
+    setRows(grid);
+    setFileName(name);
+    setSourceLabel(name);
     setHeaderRow(detected);
-    setMapping(suggestMapping(parsed[detected]));
+    setMapping(suggestMapping(grid[detected]));
     setPhase({ step: "configure" });
+  }
+
+  async function handleFile(file: File) {
+    try {
+      const format = sniffImportFormat(file.name);
+      if (format === "excel") {
+        // Spreadsheets: read every sheet; if more than one has data, let
+        // the user choose, otherwise take the roster tab automatically.
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const sheets = (await parseWorkbookGrids(bytes)).filter((s) => s.rows >= 2);
+        if (sheets.length === 0) {
+          setPhase({ step: "error", message: "No sheet in that workbook had any data rows." });
+          return;
+        }
+        setFileName(file.name);
+        if (sheets.length === 1) {
+          useGrid(sheets[0].grid, file.name);
+        } else {
+          setPhase({ step: "pickSheet", sheets });
+        }
+        return;
+      }
+      // Delimited text (CSV / TSV / .txt) — the parser auto-detects the
+      // delimiter. Unknown extensions are given the same benefit of the doubt.
+      const text = await file.text();
+      useGrid(parseCsv(text), file.name);
+    } catch (err) {
+      setPhase({
+        step: "error",
+        message: err instanceof Error ? err.message : "Couldn't read that file.",
+      });
+    }
   }
 
   function selectHeaderRow(i: number) {
@@ -166,10 +203,10 @@ export function ImportWizard() {
           </p>
         )}
         <label className="block cursor-pointer rounded-xl border-2 border-dashed border-rule bg-white p-10 text-center transition-colors duration-200 ease-out hover:border-navy">
-          <span className="text-navy">Choose a CSV file…</span>
+          <span className="text-navy">Choose a file…</span>
           <input
             type="file"
-            accept=".csv,text/csv"
+            accept={IMPORT_ACCEPT}
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -178,9 +215,39 @@ export function ImportWizard() {
           />
         </label>
         <p className="text-xs text-slate">
-          Disclaimers, preamble rows, and split headers are handled — you&apos;ll confirm the
-          header row and column mapping before anything is merged.
+          Excel (.xlsx, .xls) or delimited text (CSV, TSV, .txt) — the delimiter, disclaimer and
+          preamble rows, split headers, and multi-sheet workbooks are all handled. You&apos;ll
+          confirm the header row and column mapping before anything is merged.
         </p>
+      </div>
+    );
+  }
+
+  if (phase.step === "pickSheet") {
+    return (
+      <div className="max-w-xl space-y-4">
+        <h2 className="font-serif text-lg font-bold text-navy">Which sheet?</h2>
+        <p className="text-sm text-slate">
+          {fileName} has several sheets. Pick the one with your voter roster.
+        </p>
+        <div className="space-y-2">
+          {phase.sheets.map((s) => (
+            <button
+              key={s.name}
+              onClick={() => useGrid(s.grid, fileName)}
+              className="flex w-full items-center justify-between rounded-lg border border-rule bg-white px-4 py-3 text-left transition-colors duration-200 ease-out hover:border-navy hover:bg-stone"
+            >
+              <span className="text-ink">{s.name}</span>
+              <span className="text-xs text-slate">{(s.rows - 1).toLocaleString()} rows</span>
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => setPhase({ step: "upload" })}
+          className="text-xs text-slate underline-offset-2 hover:underline"
+        >
+          ← Choose a different file
+        </button>
       </div>
     );
   }

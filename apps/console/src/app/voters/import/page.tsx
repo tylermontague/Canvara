@@ -31,8 +31,8 @@ export default async function ImportPage() {
         <div className="mb-6">
           <h1 className="font-serif text-2xl font-bold text-navy">Import voter file</h1>
           <p className="text-sm text-slate">
-            Upload a CSV to add or update voters. Re-importing never loses canvassing data — it
-            merges.
+            Upload an Excel or CSV/text file to add or update voters. Re-importing never loses
+            canvassing data — it merges.
           </p>
         </div>
         <ImportWizard />
